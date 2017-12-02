@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/borde_sombreado"
+    android:gravity="center"
+    android:id="@+id/pickerLayout"
+    tools:context="com.nodomain.ivonne.snippet.adaptadores.horizontalNumberPicker">
+
+        <Button
+            android:id="@+id/btn_minus"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="@dimen/icono_editar"
+            android:layout_height="@dimen/icono_editar"
+            android:enabled="false"
+            android:text="-"
+            android:textSize="@dimen/texto_normal"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/tiempoApagado"
+            android:layout_width="@dimen/altura_lista"
+            android:layout_height="@dimen/icono_editar"
+            android:inputType="number"
+            android:layout_margin="1dp"
+            android:background="@color/colorGrey"
+            android:gravity="center"
+            android:focusable="false"
+            android:textSize="@dimen/texto_normal"
+            android:text="0" />
+
+        <Button
+            android:id="@+id/btn_plus"
+            android:layout_width="@dimen/icono_editar"
+            android:layout_height="@dimen/icono_editar"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:enabled="false"
+            android:textSize="@dimen/texto_normal"
+            android:textStyle="bold"
+            android:text="+" />
+
+</LinearLayout>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:context="com.nodomain.ivonne.snippet.configuracionESP.seleccionarImagen">
+
+    <LinearLayout
+        android:id="@+id/botones"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/altura_boton_con_margen"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true">
+
+        <Button
+            android:id="@+id/botonCancelar"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center_horizontal"
+            android:textSize="@dimen/texto_normal"
+            android:text="@string/cancelar" />
+
+        <View
+            android:id="@+id/ViewColorPickerHelper"
+            android:layout_width="1dip"
+            android:layout_height="wrap_content"
+            android:background="@android:color/darker_gray" />
+
+        <Button
+            android:id="@+id/botonGuardar"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center_horizontal"
+            android:textSize="@dimen/texto_normal"
+            android:text="@string/seleccionar" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:textSize="@dimen/texto_normal"
+        android:layout_marginTop="@dimen/margen_layout_fijo"
+        android:layout_marginStart="@dimen/margen_layout_fijo"
+        android:text="@string/seleccionaimagen" />
+
+    <GridView
+        android:id="@+id/layout_imagenes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/margen_layout_fijo"
+        android:gravity="center"
+        android:numColumns="2"
+        android:verticalSpacing="@dimen/margen_chico_variable"
+        android:horizontalSpacing="@dimen/margen_chico_variable"
+        android:layout_above="@id/botones"
+        android:layout_below="@id/textView"
+        android:stretchMode="columnWidth">
+    </GridView>
+
+    <View
+        android:layout_above="@id/botones"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+
+</RelativeLayout>

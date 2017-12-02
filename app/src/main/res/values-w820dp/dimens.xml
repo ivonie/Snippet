@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="altura_lista">94dp</dimen>
+    <dimen name="altura_cuadro">180dp</dimen>
+    <dimen name="ancho_cuadro">120dp</dimen>
+    <dimen name="primer_vista_altura">288dp</dimen>
+</resources>

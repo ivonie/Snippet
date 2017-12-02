@@ -1,0 +1,93 @@
+<resources>
+    <string name="app_name">Snippet</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Configuracion</string>
+    <string name="action_escanear">Actualizar dispositivos conectados</string>
+
+    <string name="aceptar">Aceptar</string>
+    <string name="ambiente">Ambiente</string>
+    <string name="apagado_automatico">Apagar el Snippet cuando no se detecte este celular</string>
+    <string name="borrar">Borrar</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="categoria">Mi categoría</string>
+    <string name="cerrar">Cerrar</string>
+    <string name="configurar">Configurar</string>
+    <string name="configurando">Configurando</string>
+    <string name="contrasena">Constraseña (opcional)</string>
+    <string name="contrasena2">Constraseña</string>
+    <string name="editar">Editar</string>
+    <string name="editar_contrasena">Editar contraseña</string>
+    <string name="encendido_automatico">Encender el Snippet cuando este celular se conecte al WiFi</string>
+    <string name="esperar">Esperar</string>
+    <string name="guardar">Guardar</string>
+    <string name="guardarforzoso">Configuraste un Snippet nuevo, se recomienda guardarlo</string>
+    <string name="habilitar">Habilitar edición</string>
+    <string name="hint_contrasena">1234</string>
+    <string name="nombre">Nombre</string>
+    <string name="minutos">minutos</string>
+    <string name="mostrar_avanzadas">Mostrar configuraciones avanzadas</string>
+    <string name="mostrarGUARDAR1">Tu nuevo</string>
+    <string name="mostrarGUARDAR2">se ha configurado</string>
+    <string name="mostrarMAC">Mostrar la MAC del Snippet antes de conectarlo a la red</string>
+    <string name="mostrarMAC1">La MAC de tu dispositivo</string>
+    <string name="mostrarMAC2">es:</string>
+    <string name="mostrarPSW">Mostrar contraseña</string>
+    <string name="personalizada">Categoría personalizada</string>
+    <string name="pregunta_editar">¿Que deseas hacer con </string>
+    <string name="reconectar">Reconectar</string>
+    <string name="seleccionar">Seleccionar</string>
+    <string name="seleccionaimagen">Selecciona una imagen</string>
+    <string name="solicitarContrasena">Ingresa la contraseña de la red</string>
+    <string name="timer">Timer</string>
+
+    <!-- Seccion de ERRORES -->
+    <string name="error1">Necesitas estar conectado a una red WiFi</string>
+    <string name="error2">El password de la red WiFi es incorrecto</string>
+    <string name="error3">No se puede conectar a ninguna red</string>
+    <string name="error4">Error al agregar el dispositivo. Reintentando</string>
+    <string name="error5">Hubo un error al agregar el dispositivo</string>
+    <string name="error6">No se encuentra ningun dispositivo nuevo</string>
+    <string name="error7">La contraseña es incorrecta</string>
+
+    <!-- Mensajes de que se esta procesando -->
+    <string name="mensaje1">Validando la contraseña</string>
+    <string name="mensaje2">Reconectando</string>
+    <string name="mensaje3">Leyendo la mac</string>
+    <string name="mensaje4">Configurando el dispositivo nuevo</string>
+    <string name="mensaje5">Configuracion exitosa</string>
+    <string name="mensaje6">Buscando dispositivos nuevos</string>
+    <string name="mensaje7">Conectando con los dispositivos</string>
+    <string name="cancelado">Cancelado</string>
+
+    <array name="ambientes">
+        <item>Sin habitacion</item>
+        <item>Cocina</item>
+        <item>Cochera</item>
+        <item>Comedor</item>
+        <item>Entrada</item>
+        <item>Estudio</item>
+        <item>Jardin</item>
+        <item>Recamara1</item>
+        <item>Recamara2</item>
+        <item>Recamara3</item>
+        <item>Sala</item>
+        <item>Otro</item>
+    </array>
+
+    <string name="title_activity_desplegar_dispositivos">Dispositivos</string>
+
+    <array name="vista_principal">
+        <item>Ambiente</item>
+        <item>Tipo</item>
+        <item>Estado</item>
+    </array>
+
+    <array name="vista_secundaria">
+        <item>Lista</item>
+        <item>Cuadro</item>
+    </array>
+
+</resources>
