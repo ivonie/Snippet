@@ -16,7 +16,7 @@
     <string name="cerrar">Cerrar</string>
     <string name="configurar">Configurar</string>
     <string name="configurando">Configurando</string>
-    <string name="contrasena">Constraseña (opcional)</string>
+    <string name="networkPSW">Constraseña (opcional)</string>
     <string name="contrasena2">Constraseña</string>
     <string name="editar">Editar</string>
     <string name="editar_contrasena">Editar contraseña</string>
@@ -26,7 +26,7 @@
     <string name="guardarforzoso">Configuraste un Snippet nuevo, se recomienda guardarlo</string>
     <string name="habilitar">Habilitar edición</string>
     <string name="hint_contrasena">1234</string>
-    <string name="nombre">Nombre</string>
+    <string name="networkName">Nombre</string>
     <string name="minutos">minutos</string>
     <string name="mostrar_avanzadas">Mostrar configuraciones avanzadas</string>
     <string name="mostrarGUARDAR1">Tu nuevo</string>
@@ -58,8 +58,9 @@
     <string name="mensaje3">Leyendo la mac</string>
     <string name="mensaje4">Configurando el dispositivo nuevo</string>
     <string name="mensaje5">Configuracion exitosa</string>
-    <string name="mensaje6">Buscando dispositivos nuevos</string>
-    <string name="mensaje7">Conectando con los dispositivos</string>
+    <string name="mensaje6">Buscando devices nuevos</string>
+    <string name="mensaje7">Conectando con los devices</string>
+    <string name="mensaje8">Validando coneccion con el myDevice nuevo</string>
     <string name="cancelado">Cancelado</string>
 
     <array name="ambientes">
@@ -85,7 +86,7 @@
         <item>Estado</item>
     </array>
 
-    <array name="vista_secundaria">
+    <array name="secondary_view">
         <item>Lista</item>
         <item>Cuadro</item>
     </array>

@@ -16,7 +16,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".app.MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -27,39 +27,38 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".servicios.segundoPlano"
-            android:theme="@style/miDialogo" />
-        <activity
-            android:name=".configuracionESP.snippetNuevo"
-            android:theme="@style/miDialogo" />
-        <activity
-            android:name=".configuracionESP.snippetMac"
-            android:theme="@style/miDialogo" />
-        <activity
-            android:name=".configuracionESP.snippetGuardar"
-            android:theme="@style/miDialogo" />
-
-        <service
-            android:name=".servicios.segundoPlanoService"
-            android:enabled="true"
-            android:exported="true" />
-
-        <activity
-            android:name=".desplegarDispositivos"
+            android:name=".app.showDevicesActivity"
             android:label="@string/title_activity_desplegar_dispositivos"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".configuracionESP.seleccionarImagen"
-            android:theme="@style/miDialogo" />
-        <activity
-            android:name=".configuracionESP.snippetEditar"
-            android:theme="@style/AppTheme" />
-        <activity android:name=".timerActivity" />
-        <activity android:name=".dimmerActivity"
+        <activity android:name=".app.dimmerActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
+        <activity android:name=".app.timerActivity" />
 
+        <activity
+            android:name=".espConfiguration.snippetNewActivity"
+            android:theme="@style/myDialog" />
+        <activity
+            android:name=".espConfiguration.snippetMacActivity"
+            android:theme="@style/myDialog" />
+        <activity
+            android:name=".espConfiguration.snippetSaveActivity"
+            android:theme="@style/myDialog" />
+        <activity
+            android:name=".espConfiguration.snippetEditActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".espConfiguration.selectImageActivity"
+            android:theme="@style/myDialog" />
+
+        <activity
+            android:name=".services.backgroundActivity"
+            android:theme="@style/myDialog" />
         <service
-            android:name=".servicios.monitorWiFi"
+            android:name=".services.backgroundService"
+            android:enabled="true"
+            android:exported="true" />
+        <service
+            android:name=".services.monitorWiFi"
             android:enabled="true"
             android:exported="true"></service>
     </application>

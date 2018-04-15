@@ -7,10 +7,10 @@
     android:orientation="vertical"
     android:layout_margin="@dimen/margen_layout"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.nodomain.ivonne.snippet.dimmerActivity"
+    tools:context="com.nodomain.ivonne.snippet.app.dimmerActivity"
     tools:showIn="@layout/activity_dimmer">
 
-    <com.nodomain.ivonne.snippet.adaptadores.brightPicker
+    <com.nodomain.ivonne.snippet.adapters.brightPicker
         android:id="@+id/bright_Picker"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.nodomain.ivonne.snippet.app.MainActivity">
+    tools:context="com.nodomain.ivonne.snippet.app.showDevicesActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -19,25 +19,27 @@
             app:popupTheme="@style/AppTheme.PopupOverlay">
 
             <Spinner
-                android:id="@+id/spinnerPrincipal"
-                android:entries="@array/vista_principal"
+                android:id="@+id/spinner_secondary"
+                android:entries="@array/secondary_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="end"
                 android:textSize="@dimen/texto_chico"
-                android:layout_gravity="end"/>
+                android:layout_marginEnd="@dimen/margen_chico_fijo"/>
 
         </android.support.v7.widget.Toolbar>
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_main" />
+    <include layout="@layout/content_show_devices"
+        android:id="@+id/include" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
         android:clickable="true"
+        android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
         app:srcCompat="@drawable/ic_fab_add" />
 

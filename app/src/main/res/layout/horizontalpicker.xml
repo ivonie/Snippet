@@ -7,7 +7,7 @@
     android:background="@drawable/borde_sombreado"
     android:gravity="center"
     android:id="@+id/pickerLayout"
-    tools:context="com.nodomain.ivonne.snippet.adaptadores.horizontalNumberPicker">
+    tools:context="com.nodomain.ivonne.snippet.adapters.horizontalNumberPicker">
 
         <Button
             android:id="@+id/btn_minus"
