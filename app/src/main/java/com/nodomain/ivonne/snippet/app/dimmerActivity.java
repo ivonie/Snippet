@@ -20,9 +20,16 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CLOSER;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_DIMMER_CLOSE;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_DIMMER_SEND;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_STATUS;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_STATUS_DIMMER;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_FOO;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_MAC;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_NAME;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_PSW;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_DIMMER;
 
 public class dimmerActivity extends AppCompatActivity implements brightPicker
         .OnSeekBarChangeListener {
@@ -35,6 +42,7 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
     private String myFoo;
     private String myMac;
     private String percentage = "100";
+    private int scale = 64;
     private int progressOld;
 
     private static final String TAG = "DIMMER";
@@ -46,7 +54,7 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 
         myBrightPicker = (brightPicker) findViewById(R.id.bright_Picker);
-        //selectorBrillo.setScale(100);
+        myBrightPicker.setScale(scale);
 
         myFoo = getIntent().getStringExtra(ESP_FOO);
         myMac = getIntent().getStringExtra(ESP_MAC);
@@ -61,7 +69,7 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
             public void processFinish(String output) {
                 functionSelection();
             }
-        }).execute("ESP8266,7STATUS", myMac,myFoo);
+        }).execute(ESP_CMD_STATUS+ESP_PSW+ESP_CLOSER, myMac,myFoo);
     }
 
     @Override
@@ -90,13 +98,19 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
         sendToEsp conectarESP = new sendToEsp(getApplicationContext(), new sendToEsp.AsyncResponse() {
             @Override
             public void processFinish(String output) {
-                percentage = output;
-                progressOld = Integer.parseInt(output);
-                myBrightPicker.setEnabled(true);
-                myBrightPicker.setBright(progressOld, 100);
+                String[] resultado = output.split(",");
+                switch (resultado[0]) {
+                    case ESP_RES_DIMMER:{
+                        percentage = resultado[1];
+                        progressOld = Integer.parseInt(resultado[1]);
+                        myBrightPicker.setEnabled(true);
+                        myBrightPicker.setBright(progressOld, scale);
+                        break;
+                    }
+                }
             }
         });
-        conectarESP.execute("ESP8266,:STATUS", myMac, myFoo);//FIXME: : (10) valor del dimmer
+        conectarESP.execute(ESP_CMD_STATUS_DIMMER+ESP_PSW+ESP_CLOSER, myMac, myFoo);//FIXME: : enviar psw
     }
 
         PrintStream output;
@@ -129,7 +143,7 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
                                 InetAddress netadd = InetAddress.getByName(myFoo.replaceAll("p","."));
                                 mySocket = new Socket(netadd, 5000);
                                 output = new PrintStream(mySocket.getOutputStream());
-                                output.println("ESP8266,8\r");//FIXME: 8 abrir el socket para el dimmer
+                                output.println(ESP_CMD_DIMMER_SEND);//FIXME: add psw
                             } catch (UnknownHostException ex) {
                             } catch (IOException ex) {}
                             break;
@@ -143,7 +157,7 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
                         }
                         case STOP_TRACKING:{
                             if (output != null)
-                                output.println("e\r");
+                                output.println(ESP_CMD_DIMMER_CLOSE);
                             break;
                         }
                     }

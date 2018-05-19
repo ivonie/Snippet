@@ -62,7 +62,7 @@ class dataBase extends SQLiteOpenHelper {
     }
 
     //Frase para crear la tabla dispos
-    String CREAR_TABLA_DISPOSITIVOS = "CREATE TABLE " + TABLE_DEVICES +
+    String CREATE_DEVICE_TABLE = "CREATE TABLE " + TABLE_DEVICES +
             "(" +
             KEY_DEVICE_ID + " INTEGER PRIMARY KEY," +
             KEY_DEVICE_RED + " TEXT," +
@@ -93,7 +93,7 @@ class dataBase extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(CREAR_TABLA_REDES);
-        db.execSQL(CREAR_TABLA_DISPOSITIVOS);
+        db.execSQL(CREATE_DEVICE_TABLE);
     }
 
     @Override
@@ -102,7 +102,7 @@ class dataBase extends SQLiteOpenHelper {
     void nuevaTablaDispositivos() {
         SQLiteDatabase db = getWritableDatabase();
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_DEVICES);
-        db.execSQL(CREAR_TABLA_DISPOSITIVOS);
+        db.execSQL(CREATE_DEVICE_TABLE);
     }
 
     void agregarActualizarRed(Network network) {

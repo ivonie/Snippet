@@ -20,26 +20,6 @@ import java.net.UnknownHostException;
  */
 
 public class sendToEsp extends AsyncTask<String,Void,String> {
-    static final String ESP_HEADER = "ESP8266,";
-
-    /* COMMANDS */
-    public static final String ESP_CMD_TOOGLE = ESP_HEADER+"1\r";
-    public static final String ESP_CMD_ESTADO = ESP_HEADER+"3\r";
-    public static final String ESP_CMD_NAME = ESP_HEADER+"4\r";
-    public static final String ESP_CMD_PSW = ESP_HEADER+"5\r";
-    public static final String ESP_CMD_STATUS = ESP_HEADER+"7\r";
-    public static final String ESP_CMD_SCAN = ESP_HEADER+"9\r";
-    public static final String ESP_CMD_DIMMER = ESP_HEADER+":\r";
-    public static final String ESP_CMD_OFF = ESP_HEADER+"<\r";
-
-    /* SEPARATORS */
-
-    /* RESULTS*/
-    public static final String ESP_RES_OK = "CORRECTO";
-    public static final String ESP_RES_CONNECTED = "CONECTADO";
-    public static final String ESP_RES_RETRY = "RETRY";
-    public static final String ESP_RES_ERROR = "ERROR";
-    public static final String ESP_RES_FAILED = "FAILEDCONNECTTOAP";
 
     private AsyncResponse delegate = null;
     private auxiliarTools misFunciones;

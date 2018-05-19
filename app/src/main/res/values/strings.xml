@@ -60,7 +60,7 @@
     <string name="mensaje5">Configuracion exitosa</string>
     <string name="mensaje6">Buscando devices nuevos</string>
     <string name="mensaje7">Conectando con los devices</string>
-    <string name="mensaje8">Validando coneccion con el myDevice nuevo</string>
+    <string name="mensaje8">Validando conexión con el dispositivo nuevo</string>
     <string name="cancelado">Cancelado</string>
 
     <array name="ambientes">

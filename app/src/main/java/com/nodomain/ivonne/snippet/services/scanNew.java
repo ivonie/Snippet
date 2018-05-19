@@ -8,6 +8,7 @@ import com.nodomain.ivonne.snippet.objects.Device;
 import com.nodomain.ivonne.snippet.tools.dataManager;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,10 +20,10 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import static com.nodomain.ivonne.snippet.espConfiguration.sendToEsp.ESP_CMD_SCAN;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_SCAN;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_CONNECTED;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_SCAN;
 
 /**
  * Created by Ivonne on 28/09/2017.
@@ -44,7 +45,7 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
     private int mascara = 0;
     private int red = 0;
     private int gate = 0;
-    private int tamaño = 0;
+    private int size = 0;
     private int inicio = 0;
 
     public scanNew(Context context, AsyncResponse delegate) {
@@ -65,15 +66,15 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
         networkSSID = wifiManager.getConnectionInfo().getSSID().replaceAll("\"","");
 
         int diagonal = Integer.bitCount(mascara);//diagonal de la red
-        tamaño = (int) Math.pow(2,(32-diagonal))-3;
+        size = (int) Math.pow(2,(32-diagonal))-3;
         inicio = Integer.reverse(red);
     }
 
     @Override
     protected Void doInBackground(Void... params) {
         mPool = Executors.newFixedThreadPool(THREADS);
-        for (int i = inicio; i <= inicio+tamaño-1; i++) {
-            iniciar(i);
+        for (int i = inicio; i <= inicio+size-1; i++) {
+            start(i);
         }
         mPool.shutdown();
         try {
@@ -85,6 +86,8 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
         } catch (InterruptedException e){
             mPool.shutdownNow();
             Thread.currentThread().interrupt();
+        } finally {
+            processARP();
         }
         return null;
     }
@@ -92,7 +95,7 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
     @Override
     protected void onPostExecute(Void v) {
         if (delegate != null) {
-            delegate.processFinish(newDevices);//si se encontraron dispositivos newDevices
+            delegate.processFinish(newDevices);
         }
     }
 
@@ -111,16 +114,16 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
         super.onCancelled();
     }
 
-    private void iniciar(int i) {
+    private void start(int i) {
         if(!mPool.isShutdown()) {
-            mPool.execute(new buscarEnLaRed(getStringFromReversedIP(i)));
+            mPool.execute(new networkSearch(getStringFromReversedIP(i)));
         }
     }
 
-    private class buscarEnLaRed implements Runnable {
+    private class networkSearch implements Runnable {
         private String addr;
 
-        buscarEnLaRed(String addr) {
+        networkSearch(String addr) {
             this.addr = addr;
         }
 
@@ -132,28 +135,8 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
             if(!addr.equals(getStringFromReversedIP(Integer.reverse(gate))) & !addr.equals("0.0.0.0")) {
                 try {
                     InetAddress h = InetAddress.getByName(addr);
-                    // Arp Check #1
-                    if (!getHardwareAddress(addr).equals("00:00:00:00:00:00")) {
-                        Device myDevice = new Device();
-                        myDevice.setDevFoo(addr.replaceAll("\\.", "p"));
-                        myDevice.setDevMac(getHardwareAddress(addr));
-                        reachable(myDevice);
-                        return;
-                    }
                     // Native InetAddress check
                     if (h.isReachable(TIMEOUT_CONNECTION)) {
-                        Device myDevice = new Device();
-                        myDevice.setDevFoo(addr.replaceAll("\\.", "p"));
-                        myDevice.setDevMac(getHardwareAddress(addr));
-                        reachable(myDevice);
-                        return;
-                    }
-                    // Arp Check #2
-                    if (!getHardwareAddress(addr).equals("00:00:00:00:00:00")) {
-                        Device myDevice = new Device();
-                        myDevice.setDevFoo(addr.replaceAll("\\.", "p"));
-                        myDevice.setDevMac(getHardwareAddress(addr));
-                        reachable(myDevice);
                         return;
                     }
                 } catch (IOException e) {
@@ -162,8 +145,33 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
         }
     }
 
+    private void processARP() {
+        BufferedReader bufferedReader = null;
+        try {
+            bufferedReader = new BufferedReader(new FileReader("/proc/net/arp"));
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                String[] splitted = line.split(" +");
+                if (splitted != null && splitted.length >= 4) {
+                    Device myDevice = new Device();
+                    myDevice.setDevFoo(splitted[0].replaceAll("\\.", "p"));
+                    myDevice.setDevMac(splitted[3]);
+                    reachable(myDevice);
+                }
+            }
+        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
+        } finally{
+            try {
+                bufferedReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void reachable(Device host) {
-        if (myDM.deviceExists(host.getDevMac().toUpperCase()))//si el dispositivo ya esta en la base de datos
+        if (myDM.deviceExists(host.getDevMac().toUpperCase()))
             myDM.updateIP(host.getDevMac(), host.getDevFoo());
         else{
             connectWithNew(host);
@@ -177,21 +185,21 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
             socket.connect(new InetSocketAddress(netadd, 5000), TIMEOUT_CONNECTION);
             if (socket.isConnected()){
                 PrintStream output = new PrintStream(socket.getOutputStream());
-                output.println(ESP_CMD_SCAN);//FIXME: 9 escaneo del dimmer
+                output.println(ESP_CMD_SCAN);
                 InputStream stream = socket.getInputStream();
                 byte[] lenBytes = new byte[128];//128
                 stream.read(lenBytes, 0, 128);
                 String resultado = new String(lenBytes, "UTF-8").trim();
-                String[] valores = resultado.split(",");
-                if (valores[0].equals("CONECTADO")) {
+                String[] data = resultado.split(",");
+                if (data[0].equals(ESP_RES_SCAN)) {
                     Device myDevice = new Device();
                     myDevice.setDevFoo(host.getDevFoo());
-                    myDevice.setDevMac(valores[2]);
-                    myDevice.setDevType(valores[3]);
-                    myDevice.setDevImage(valores[3].toLowerCase() + "0");
-                    myDevice.setDevName(valores[4]);
+                    myDevice.setDevMac(data[2]);
+                    myDevice.setDevType(data[3]);
+                    myDevice.setDevImage(data[3].toLowerCase() + "0");
+                    myDevice.setDevName(data[4]);
                     myDevice.setDevNetwork(networkSSID);
-                    myDevice.setDevPsw("0000");
+                    myDevice.setDevPsw("----");
                     myDevice.setDevHouseSpace("Nuevo");
                     newDevices = true;
                     myDM.addorUpdateDevice(myDevice);
@@ -209,36 +217,5 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
                 ((i >>> 8) & 0xFF) + "." +
                 ((i >>> 16) & 0xFF) + "." +
                 ((i >>> 24) & 0xFF));
-    }
-
-    private static String getHardwareAddress(String ip) {
-        String hw = "00:00:00:00:00:00";
-        BufferedReader bufferedReader = null;
-        try {
-            if (ip != null) {
-                String ptrn = String.format("^%s\\s+0x1\\s+0x2\\s+([:0-9a-fA-F]+)\\s+\\*\\s+\\w+$", ip.replace(".", "\\."));
-                Pattern pattern = Pattern.compile(ptrn);
-                bufferedReader = new BufferedReader(new FileReader("/proc/net/arp"), 8 * 1024);
-                String line;
-                Matcher matcher;
-                while ((line = bufferedReader.readLine()) != null) {
-                    matcher = pattern.matcher(line);
-                    if (matcher.matches()) {
-                        hw = matcher.group(1);
-                        break;
-                    }
-                }
-            }
-        } catch (IOException e) {
-            return hw;
-        } finally {
-            try {
-                if(bufferedReader != null) {
-                    bufferedReader.close();
-                }
-            } catch (IOException e) {
-            }
-        }
-        return hw;
     }
 }

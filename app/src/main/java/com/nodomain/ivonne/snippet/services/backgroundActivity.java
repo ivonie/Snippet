@@ -5,7 +5,9 @@ import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.DhcpInfo;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
@@ -18,9 +20,21 @@ import android.widget.TextView;
 
 import com.nodomain.ivonne.snippet.R;
 import com.nodomain.ivonne.snippet.espConfiguration.espManager;
+import com.nodomain.ivonne.snippet.espConfiguration.sendToEsp;
+import com.nodomain.ivonne.snippet.tools.auxiliarTools;
+
+import java.util.List;
 
 import static com.nodomain.ivonne.snippet.app.MainActivity.SCAN_NEW;
 import static com.nodomain.ivonne.snippet.app.showDevicesActivity.CORRECT_IP;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_AP_SSID;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CLOSER;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_ESTADO;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_PSW;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_CONNECTED;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_FAILED;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_RECEIVED;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.SOCKET_CONNECT;
 import static com.nodomain.ivonne.snippet.espConfiguration.snippetNewActivity.ACTION;
 import static com.nodomain.ivonne.snippet.espConfiguration.snippetNewActivity.CONFIGURE_SNIPPET;
 import static com.nodomain.ivonne.snippet.espConfiguration.snippetNewActivity.PARAM1;
@@ -41,6 +55,11 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
     private String action;
     private Intent intent;
 
+    private auxiliarTools myTools;
+    private espManager myEspManager;
+
+    private CountDownTimer timer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,8 +79,12 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
 
         if (intentRetenided == null) {
             // add the fragment
+            Log.w(TAG,"new fragment, not Retained");
             intentRetenided = new retainIntent();
             fm.beginTransaction().add(intentRetenided, TAG_RETAINED_INTENT).commit();
+
+            myEspManager = new espManager(this);
+            myTools = new auxiliarTools();
 
             intent = new Intent(context, backgroundService.class);
             intent.putExtra(backgroundService.EXTRA_MESSENGER, new Messenger(myHandler));
@@ -89,24 +112,26 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
                     break;
                 }
                 case CONFIGURE_SNIPPET:{
-                    intent.setAction(CONFIGURE_SNIPPET);
-                    String param1 = getIntent().getStringExtra(PARAM1);//nombre esp
-                    String param2 = getIntent().getStringExtra(PARAM2);//contraseña esp
-                    String param3 = getIntent().getStringExtra(PARAM3);//nombre red
-                    String param4 = getIntent().getStringExtra(PARAM4);//contrase{a red
+                    //intent.setAction(CONFIGURE_SNIPPET);
+                    String param1 = getIntent().getStringExtra(PARAM1);//ESP NAME
+                    String param2 = getIntent().getStringExtra(PARAM2);//ESP PSW
+                    String param3 = getIntent().getStringExtra(PARAM3);//NETWORK NAME
+                    String param4 = getIntent().getStringExtra(PARAM4);//NETWORK PSW
+                    /*
                     intent.putExtra(PARAM1,param1);
                     intent.putExtra(PARAM2,param2);
                     intent.putExtra(PARAM3,param3);
                     intent.putExtra(PARAM4,param4);
-                    context.startService(intent);
+                    context.startService(intent);*/
+                    handleAccionConfigureEsp(param1, param2, param3, param4);
                     break;
                 }
                 case SCAN_NEW:{
                     WifiManager wifiManager = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                     DhcpInfo info = wifiManager.getDhcpInfo();
-                    int intGate = info.gateway;//direccion del router en valor int
-                    int intMask = info.netmask;//mascara de la red
-                    int intRed = (intMask & intGate);//and de la mascara y la direccion de router para obtener la direccion de la red
+                    int intGate = info.gateway;
+                    int intMask = info.netmask;
+                    int intRed = (intMask & intGate);
                     scanNew scanNewtask = new scanNew(backgroundActivity.this, new scanNew.AsyncResponse() {
                         @Override
                         public void processFinish(boolean nuevo) {
@@ -120,15 +145,16 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
                     break;
                 }
                 case CORRECT_IP:{
-                    final String macABuscar = getIntent().getStringExtra(PARAM1);//mac a buscar
+                    final String macABuscar = getIntent().getStringExtra(PARAM1);
                     WifiManager wifiManager = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                     DhcpInfo info = wifiManager.getDhcpInfo();
-                    int intGate = info.gateway;//direccion del router en valor int
-                    int intMask = info.netmask;//mascara de la red
-                    int intRed = (intMask & intGate);//and de la mascara y la direccion de router para obtener la direccion de la red
+                    int intGate = info.gateway;
+                    int intMask = info.netmask;
+                    int intRed = (intMask & intGate);
                     scanOne scanOneTask = new scanOne(new scanOne.AsyncResponse() {
                         @Override
                         public void processFinish(String IpCorregida) {
+                            Log.w(TAG,"IP corregida: "+IpCorregida);
                             if (!IpCorregida.isEmpty())
                                 setResult(RESULT_OK, getIntent().putExtra(PARAM1, IpCorregida)
                                         .putExtra(PARAM2, macABuscar));
@@ -143,6 +169,8 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
 
             intentRetenided.setIntent(intent);
         }
+        else
+            Log.w(TAG,"Retained intent");
 
         switch (action){
             case VALIDATE_PSW:{
@@ -163,10 +191,6 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
             }
             case SCAN_NEW:{
                 text.setText(getString(R.string.mensaje6));
-                break;
-            }
-            case CORRECT_IP:{
-                text.setText(getString(R.string.mensaje8));
                 break;
             }
         }
@@ -191,6 +215,113 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
 
     }
 
+    private void handleAccionConfigureEsp(final String ESPname, final String ESPpsw,
+                                          final String networkSSID, final String contrasenaSSID) {
+        myEspManager.setOnConnectedListener(new espManager.OnConnectedListener() {
+            @Override
+            public void onConnected(boolean connected) {
+                if (connected) {
+                    WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                    int gatewayIP = wifiManager.getDhcpInfo().gateway;
+                    sendToEsp sendingToEsp = new sendToEsp(getApplicationContext(), new sendToEsp.AsyncResponse() {
+                        @Override
+                        public void processFinish(String output) {
+                            String result = output.substring(0,output.indexOf(","));
+                            switch (result) {
+                                case ESP_RES_RECEIVED: {
+                                    getEspData();
+                                    break;
+                                }
+                                default: {
+                                    myEspManager.borrarEspWifi();
+                                    handleResult(null, false);
+                                }
+                            }
+                        }
+                    });
+                    sendingToEsp.execute(SOCKET_CONNECT + networkSSID.replaceAll("\"","") + "," + contrasenaSSID + "," + ESPname + "," + ESP_PSW + ESP_CLOSER, null, myTools.intToIp(gatewayIP));
+                } else{
+                    myEspManager.borrarEspWifi();
+                    handleResult(null, false);
+                }
+            }
+        });
+        myEspManager.connectToEsp();
+    }
+
+    protected void getEspData(){
+        myEspManager.borrarEspWifi();
+        new CountDownTimer(30000, 1000) {/*wait 10 seconds before reading data*/
+            int counter=0;
+            @Override
+            public void onTick(long l) {
+                counter ++;
+                if (counter == 10) {/*wait exactly 10 seconds*/
+                    myEspManager.setOnConnectedListener(new espManager.OnConnectedListener() {
+                        @Override
+                        public void onConnected(boolean connected) {
+                            if (connected) {
+                                WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                                int gatewayIP = wifiManager.getDhcpInfo().gateway;
+                                sendToEsp sendingToEsp = new sendToEsp(getApplicationContext(), new sendToEsp.AsyncResponse() {
+                                    @Override
+                                    public void processFinish(String output) {
+                                        String[] resultado = output.split(",");
+                                        switch (resultado[0]) {
+                                            case ESP_RES_CONNECTED: {
+                                                myEspManager.borrarEspWifi();
+                                                String aux = output.replaceAll("\\.", "p");
+                                                handleResult(aux.substring(aux.indexOf(",")+1), true);
+                                                break;
+                                            }
+                                            case ESP_RES_FAILED: {
+                                                handleResult(ESP_RES_FAILED, true);
+                                                break;
+                                            }
+                                            default: {
+                                                myEspManager.borrarEspWifi();
+                                                handleResult(null, false);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                });
+                                sendingToEsp.execute(ESP_CMD_ESTADO, null, myTools.intToIp(gatewayIP));
+                            } else{
+                                myEspManager.borrarEspWifi();
+                                handleResult(null, false);
+                            }
+                        }
+                    });
+                    myEspManager.connectToEsp();
+                }
+
+            }
+            @Override
+            public void onFinish() {
+                myEspManager.borrarEspWifi();
+                handleResult(null, false);
+                this.cancel();
+            }
+        }.start();
+    }
+
+    protected void handleResult(String text, boolean result) {
+        if (timer != null) {
+            timer.cancel();
+        }
+        try {
+            if (result)
+                setResult(RESULT_OK, getIntent().putExtra(PARAM1, text));
+            else
+                setResult(RESULT_CANCELED);
+            finish();
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        finish();
+    }
+
     @Override
     public boolean handleMessage(Message msg){
         if (msg.arg1 == 0) {
@@ -210,6 +341,10 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
                     break;
                 }
                 case CONFIGURE_SNIPPET: {
+                    setResult(RESULT_OK, getIntent().putExtra(PARAM1, msg.obj.toString()));
+                    break;
+                }
+                case CORRECT_IP: {
                     setResult(RESULT_OK, getIntent().putExtra(PARAM1, msg.obj.toString()));
                     break;
                 }

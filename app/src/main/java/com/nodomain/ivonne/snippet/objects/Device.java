@@ -10,7 +10,7 @@ public class Device {
     String devType;
     String devFoo;
     String devMac;
-    String devPsw = "0000";
+    String devPsw = "----";
     String devHouseSpace = "Sin categoría";
     String devGroup = "";
     String devXx = "0";

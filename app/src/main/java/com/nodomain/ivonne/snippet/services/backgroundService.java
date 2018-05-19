@@ -3,9 +3,7 @@ package com.nodomain.ivonne.snippet.services;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
 import android.net.DhcpInfo;
-import android.net.NetworkInfo;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.CountDownTimer;
@@ -21,6 +19,14 @@ import com.nodomain.ivonne.snippet.objects.Network;
 
 import java.util.List;
 
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CLOSER;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_ESTADO;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_MAC;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_PSW;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_CONNECTED;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_FAILED;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_RECEIVED;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.SOCKET_CONNECT;
 import static com.nodomain.ivonne.snippet.espConfiguration.snippetNewActivity.CONFIGURE_SNIPPET;
 import static com.nodomain.ivonne.snippet.espConfiguration.snippetNewActivity.PARAM1;
 import static com.nodomain.ivonne.snippet.espConfiguration.snippetNewActivity.PARAM2;
@@ -75,11 +81,11 @@ public class backgroundService extends Service {
                 case CONFIGURE_SNIPPET: {
                     String param1 = intent.getStringExtra(PARAM1);
                     String param2 = intent.getStringExtra(PARAM2);
-                        String param3 = intent.getStringExtra(PARAM3);
-                        String param4 = intent.getStringExtra(PARAM4);
-                        handleAccionConfigureEsp(param1, param2, param3, param4);
-                        break;
-                    }
+                    String param3 = intent.getStringExtra(PARAM3);
+                    String param4 = intent.getStringExtra(PARAM4);
+                    handleAccionConfigureEsp(param1, param2, param3, param4);
+                    break;
+                }
                 }
 
             }
@@ -182,7 +188,7 @@ public class backgroundService extends Service {
                         public void processFinish(String output) {
                             String values[] = output.split(",");
                             switch (values[0]) {
-                                case "RECIBIDO": {
+                                case ESP_RES_RECEIVED: {
                                     myEspManager.borrarEspWifi();
                                     handleResult(values[1], true);
                                     break;
@@ -194,7 +200,7 @@ public class backgroundService extends Service {
                             }
                         }
                     });
-                    sendingToEsp.execute("ESP8266,=", null, myTools.intToIp(gatewayIP));// FIXME: = (13) pedir MAC
+                    sendingToEsp.execute(ESP_CMD_MAC, null, myTools.intToIp(gatewayIP));
                 } else {
                     myEspManager.borrarEspWifi();
                     handleResult(null, false);
@@ -212,23 +218,19 @@ public class backgroundService extends Service {
                 if (connected) {
                     WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                     int gatewayIP = wifiManager.getDhcpInfo().gateway;
-                    sendToEsp sendingToEsp = new sendToEsp(getApplicationContext(), new sendToEsp.AsyncResponse() {
-                        @Override
-                        public void processFinish(String output) {
-                            String result = output.substring(0,output.indexOf(","));
-                            switch (result) {
-                                case "RECIBIDO": {
-                                    getEspData();
-                                    break;
-                                }
-                                default: {
-                                    myEspManager.borrarEspWifi();
-                                    handleResult(null, false);
-                                }
-                            }
+                    String output = myEspManager.sendToESPfromService(myTools.intToIp(gatewayIP),
+                            SOCKET_CONNECT + networkSSID.replaceAll("\"","") + "," + contrasenaSSID + "," + nombreESP + "," + ESP_PSW + ESP_CLOSER);
+                    String result = output.substring(0,output.indexOf(","));
+                    switch (result) {
+                        case ESP_RES_RECEIVED: {
+                            getEspData();
+                            break;
                         }
-                    });
-                    sendingToEsp.execute("ESP8266,26\n7" + networkSSID.replaceAll("\"","") + "7\n8" + contrasenaSSID + "8\n9" + nombreESP + "9\n10" + contrasenaESP, null, myTools.intToIp(gatewayIP));
+                        default: {
+                            myEspManager.borrarEspWifi();
+                            handleResult(null, false);
+                        }
+                    }
                 } else{
                     myEspManager.borrarEspWifi();
                     handleResult(null, false);
@@ -245,27 +247,38 @@ public class backgroundService extends Service {
             public void onTick(long l) {
                 counter ++;
                 if (counter == 10) {/*wait exactly 10 seconds*/
-                    WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                    int gatewayIP = wifiManager.getDhcpInfo().gateway;
-                    sendToEsp sendingToEsp = new sendToEsp(getApplicationContext(), new sendToEsp.AsyncResponse() {
+                    myEspManager.setOnConnectedListener(new espManager.OnConnectedListener() {
                         @Override
-                        public void processFinish(String output) {
-                            String[] resultado = output.split(",");
-                            switch (resultado[0]) {
-                                case "CONECTADO": {
-                                    myEspManager.borrarEspWifi();
-                                    String aux = output.replaceAll("\\.", "p");
-                                    handleResult(aux.substring(aux.indexOf(",")+1), true);//pasar toda la cadena
-                                    break;
+                        public void onConnected(boolean connected) {
+                            if (connected) {
+                                WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                                int gatewayIP = wifiManager.getDhcpInfo().gateway;
+                                String output = myEspManager.sendToESPfromService(myTools.intToIp(gatewayIP), ESP_CMD_ESTADO);
+                                String[] resultado = output.split(",");
+                                switch (resultado[0]) {
+                                    case ESP_RES_CONNECTED: {
+                                        myEspManager.borrarEspWifi();
+                                        String aux = output.replaceAll("\\.", "p");
+                                        handleResult(aux.substring(aux.indexOf(",")+1), true);
+                                        break;
+                                        }
+                                        case ESP_RES_FAILED: {
+                                            handleResult(ESP_RES_FAILED, true);
+                                            break;
+                                        }
+                                        default: {
+                                            myEspManager.borrarEspWifi();
+                                            handleResult(null, false);
+                                            break;
+                                        }
                                 }
-                                default: {
-                                    myEspManager.borrarEspWifi();
-                                    handleResult(null, false);
-                                }
+                            } else{
+                                myEspManager.borrarEspWifi();
+                                handleResult(null, false);
                             }
                         }
                     });
-                    sendingToEsp.execute("ESP8266,3ESTADO", null, myTools.intToIp(gatewayIP));//FIXME: 3 Estado si se conecto a la red
+                    myEspManager.connectToEsp();
                 }
 
             }
@@ -287,9 +300,9 @@ public class backgroundService extends Service {
             if (text != null)
                 msg.obj = text;
             if (result)
-                msg.arg1 = 1;
+                msg.arg1 = 1;//result OK
             else
-                msg.arg1 = 0;
+                msg.arg1 = 0;//result NOTOK
             myHandler.sendMessage(msg);
             this.stopSelf();
         }catch (Exception e) {

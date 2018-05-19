@@ -102,20 +102,25 @@ public class snippetSaveActivity extends AppCompatActivity implements Button.OnC
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
-    private void readData(String data){
+    private boolean readData(String data){
         String[] value = data.split(",");
-        snippetFoo = value[0];
-        if (value.length > 1)
-            snippetMac = value[1];
-        if (value.length > 2) {
-            snippetType = value[2];
-            myImageView.setImageResource(getApplicationContext().getResources()
-                    .getIdentifier(snippetType.toLowerCase()+"0", "drawable",
-                            getApplicationContext().getPackageName()));
-            snippetImage = snippetType.toLowerCase()+"0";
+        if (value.length < 2)
+            return false;//mesage received was "reconnect"
+        else {
+            snippetFoo = value[0];
+            if (value.length > 1)
+                snippetMac = value[1];
+            if (value.length > 2) {
+                snippetType = value[2];
+                myImageView.setImageResource(getApplicationContext().getResources()
+                        .getIdentifier(snippetType.toLowerCase() + "0", "drawable",
+                                getApplicationContext().getPackageName()));
+                snippetImage = snippetType.toLowerCase() + "0";
+            }
+            text1.setText(getString(R.string.mostrarGUARDAR1) + " " + snippetType.toLowerCase() + " \"" + snippetName +
+                    "\" " + getString(R.string.mostrarGUARDAR2));
+            return true;
         }
-        text1.setText(getString(R.string.mostrarGUARDAR1)+" "+snippetType.toLowerCase()+" \""+snippetName+
-                "\" "+getString(R.string.mostrarGUARDAR2));
     }
 
     private void addSnippet(){
@@ -135,37 +140,40 @@ public class snippetSaveActivity extends AppCompatActivity implements Button.OnC
         finish();
     }
 
+    private void retryConfigure(){
+        if (retry) {
+            Log.w(TAG,"Failed, retrying");
+            retry = false;
+            Toast.makeText(getApplicationContext(), getResources()
+                    .getString(R.string.error4), Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(snippetSaveActivity.this, backgroundActivity.class);
+            intent.putExtra(ACTION, CONFIGURE_SNIPPET);
+            intent.putExtra(PARAM1, snippetName);
+            intent.putExtra(PARAM2, snippetPsw);
+            intent.putExtra(PARAM3, networkName);
+            intent.putExtra(PARAM4, networkPsw);
+            startActivityForResult(intent, CONFIGURE_SNIPPET_CODE);
+        }
+        else {
+            setResult(RESULT_CANCELED,getIntent().putExtra("RESULT","ERROR"));
+            finish();
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode){
             case CONFIGURE_SNIPPET_CODE: {
                 if (resultCode == RESULT_OK) {
                     Toast.makeText(getApplicationContext(), getResources()
-                            .getString(R.string.mensaje5), Toast.LENGTH_SHORT).show();
-                    readData(data.getStringExtra(PARAM1));
+                                .getString(R.string.mensaje5), Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(snippetSaveActivity.this, backgroundActivity.class);
                     intent.putExtra(ACTION, snippetNewActivity.RECONNECT);
                     intent.putExtra(PARAM1, networkName);
-                    startActivityForResult(intent, RECONNECT_CODE);
+                    startActivityForResult(intent, RECONNECT_CODE);//reconnect to get esp configuration data
                 }
                 else {
-                    if (retry) {
-                        Log.w(TAG,"Failed, retrying");
-                        retry = false;
-                        Toast.makeText(getApplicationContext(), getResources()
-                                .getString(R.string.error4), Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(snippetSaveActivity.this, backgroundActivity.class);
-                        intent.putExtra(ACTION, CONFIGURE_SNIPPET);
-                        intent.putExtra(PARAM1, snippetName);
-                        intent.putExtra(PARAM2, snippetPsw);
-                        intent.putExtra(PARAM3, networkName);
-                        intent.putExtra(PARAM4, networkPsw);
-                        startActivityForResult(intent, CONFIGURE_SNIPPET_CODE);
-                    }
-                    else {
-                        setResult(RESULT_CANCELED,getIntent().putExtra("RESULT","ERROR"));
-                        finish();
-                    }
+                    retryConfigure();
                 }
                 break;
             }
@@ -178,7 +186,12 @@ public class snippetSaveActivity extends AppCompatActivity implements Button.OnC
                 }
                 break;
             }
-            case RECONNECT_CODE:{//RECONECTAR
+            case RECONNECT_CODE:{//RECONECTAR}
+                Boolean success = readData(data.getStringExtra(PARAM1));
+                if (!success){
+                    retry = true;
+                    retryConfigure();
+                }
             }
         }
         super.onActivityResult(requestCode, resultCode, data);

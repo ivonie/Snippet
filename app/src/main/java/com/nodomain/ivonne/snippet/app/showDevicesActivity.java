@@ -38,10 +38,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CLOSER;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_STATUS;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_TOOGLE;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_FOO;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_IMAGE;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_MAC;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_NAME;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_PSW;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_STATUS;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_TYPE;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.LIGHT_BULB;
@@ -139,10 +143,9 @@ public class showDevicesActivity extends AppCompatActivity implements
                 }
             });
             switch (tipo) {
-                //case "FOCO": {//manda una instruccion y modifica su vista acorde a ésta
                 case LIGHT_BULB: {
-                    conectarESP.execute("ESP8266,1TOOGLE", deviceList.get(position).get("mac"),
-                            deviceList.get(position).get(ESP_FOO));//FIXME: 1 encender/apagar el foco
+                    conectarESP.execute(ESP_CMD_TOOGLE+ESP_PSW+ESP_CLOSER, deviceList.get(position).get("mac"),
+                            deviceList.get(position).get(ESP_FOO));//FIXME: AGREGAR psw
                     break;
                 }
                 case LIGHT_DIMMER: {
@@ -273,9 +276,11 @@ public class showDevicesActivity extends AppCompatActivity implements
                         String validFoo = new espManager(getApplicationContext())
                                     .getValidFoo(devices.get(i).getDevMac(),
                                     devices.get(i).getDevFoo());
-                        if (validFoo.equals("ERROR"))
-                            scanForFoo(devices.get(i).getDevMac());
-                        else if (!validFoo.equals(devices.get(i).getDevFoo()))
+                        Log.w(TAG,"IP: "+validFoo);
+                        //if (validFoo.equals("ERROR") || validFoo.equals("") || validFoo.equals("0p0p0p0"))
+                        //    scanForFoo(devices.get(i).getDevMac());
+                        //else
+                            if (!validFoo.equals(devices.get(i).getDevFoo()))
                             datamanager.updateIP(devices.get(i).getDevMac(),validFoo);
                         Map<String, String> datum = new HashMap<>(2);
                         datum.put(ESP_NAME, devices.get(i).getDevName());
@@ -314,9 +319,10 @@ public class showDevicesActivity extends AppCompatActivity implements
                 Log.w(TAG,"request status");
                 String validFoo = new espManager(getApplicationContext())
                         .getValidFoo(myDevice.get(ESP_MAC),myDevice.get(ESP_FOO));
-                if (validFoo.equals("ERROR"))
-                    scanForFoo(myDevice.get(ESP_MAC));
-                else if (!validFoo.equals(myDevice.get(ESP_FOO)))
+                //if (validFoo.equals("ERROR"))
+                //    scanForFoo(myDevice.get(ESP_MAC));
+                //else
+                    if (!validFoo.equals(myDevice.get(ESP_FOO)))
                     datamanager.updateIP(myDevice.get(ESP_MAC),validFoo);
                 final String imagePrefix = myDevice.get(ESP_IMAGE);
                 sendToEsp mySendToEsp = new sendToEsp(getApplicationContext(), new sendToEsp.AsyncResponse() {
@@ -345,8 +351,8 @@ public class showDevicesActivity extends AppCompatActivity implements
                         }
                     }
                 });
-                mySendToEsp.execute("ESP8266,7STATUS", myDevice.get(ESP_MAC),
-                        myDevice.get(ESP_FOO));//FIXME: 7 estatus del Snippet
+                mySendToEsp.execute(ESP_CMD_STATUS+ESP_PSW+ESP_CLOSER, myDevice.get(ESP_MAC),
+                        myDevice.get(ESP_FOO));
             }
 
             private String recoverStored(String myMac, String imagePrefix){
@@ -440,7 +446,9 @@ public class showDevicesActivity extends AppCompatActivity implements
                 case CORRECT_IP_CODE: {//CORREGIR_IP TODO: o se atrasa su inicio, o se hace 2 veces
                     String snippetFoo = data.getStringExtra(PARAM1);
                     String snippetMac = data.getStringExtra(PARAM2);
+                    Log.w(TAG,"Correct IP: "+snippetFoo );
                     new dataManager(getApplicationContext()).updateIP(snippetMac,snippetFoo);
+                    //feedList(UPDATE_CONNECTION);
                     break;
                 }
                 default:

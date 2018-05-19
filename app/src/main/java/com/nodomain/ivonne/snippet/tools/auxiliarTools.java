@@ -12,6 +12,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Ivonne on 23/09/2017.
@@ -29,7 +31,7 @@ public class auxiliarTools {
             if (!myFoo.equals("0p0p0p0") && isIPreachable(myFoo))
                 foo = myFoo;
             else{
-                String myNewFoo = leerARP(myMac.toLowerCase());
+                String myNewFoo = readARP(myMac.toLowerCase());
                 if (isIPreachable(myNewFoo)) {
                     foo = myNewFoo;
                 }
@@ -37,7 +39,7 @@ public class auxiliarTools {
         }
         else{
             if (myMac != null) {
-                myFoo = leerARP(myMac);
+                myFoo = readARP(myMac);
                 if (isIPreachable(myFoo))
                     foo = myFoo;
             }
@@ -45,8 +47,8 @@ public class auxiliarTools {
         return foo;
     }
 
-    private static String leerARP(String dis_mac) {
-        String dis_ip = "";
+    private static String readARP(String devMAC) {//ip from MAC
+        String devIP = "";
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(new FileReader("/proc/net/arp"));
@@ -56,8 +58,8 @@ public class auxiliarTools {
                 if (splitted != null && splitted.length >= 4) {
                     String ip = splitted[0];
                     String mac = splitted[3];
-                    if (mac.equals(dis_mac.toLowerCase()))
-                        dis_ip = ip.replaceAll("\\.","p");
+                    if (mac.equals(devMAC.toLowerCase()))
+                        devIP = ip.replaceAll("\\.","p");
                 }
             }
         } catch (FileNotFoundException e) {
@@ -69,7 +71,38 @@ public class auxiliarTools {
                 e.printStackTrace();
             }
         }
-        return dis_ip;
+        return devIP;
+    }
+
+    private static String getHardwareAddress(String ip) {//MAC from IP
+        String hw = "00:00:00:00:00:00";
+        BufferedReader bufferedReader = null;
+        try {
+            if (ip != null) {
+                String ptrn = String.format("^%s\\s+0x1\\s+0x2\\s+([:0-9a-fA-F]+)\\s+\\*\\s+\\w+$", ip.replace(".", "\\."));
+                Pattern pattern = Pattern.compile(ptrn);
+                bufferedReader = new BufferedReader(new FileReader("/proc/net/arp"), 8 * 1024);
+                String line;
+                Matcher matcher;
+                while ((line = bufferedReader.readLine()) != null) {
+                    matcher = pattern.matcher(line);
+                    if (matcher.matches()) {
+                        hw = matcher.group(1);
+                        break;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            return hw;
+        } finally {
+            try {
+                if(bufferedReader != null) {
+                    bufferedReader.close();
+                }
+            } catch (IOException e) {
+            }
+        }
+        return hw;
     }
 
     private static boolean isIPreachable(String Foo){

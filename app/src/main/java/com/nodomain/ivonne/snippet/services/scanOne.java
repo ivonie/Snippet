@@ -1,6 +1,7 @@
 package com.nodomain.ivonne.snippet.services;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -17,18 +18,19 @@ import java.util.concurrent.TimeUnit;
 
 public class scanOne extends AsyncTask<Void, Void, Void> {
     private AsyncResponse delegate = null;
+    static final String TAG = "SCAN";
     private final static int TIMEOUT_CONNECTION = 300; //milisegundos
     private final static int TIMEOUT_SCAN = 3600; // seconds
     private final static int TIMEOUT_SHUTDOWN = 10; // seconds
     private final static int THREADS = 10;
     private ExecutorService mPool; //pool de actividades asicronas
-    private String MacABuscar;
-    private String IPEncontrada = "";
+    private String searchedMAC;
+    private String IPFound = "";
 
     private int mascara = 0;
     private int red = 0;
     private int gate = 0;
-    private int tamaño = 0;
+    private int size = 0;
     private int inicio = 0;
 
     public scanOne(AsyncResponse delegate) {
@@ -39,21 +41,21 @@ public class scanOne extends AsyncTask<Void, Void, Void> {
         this.mascara = mascara;
         this.red = red;
         this.gate = gate;
-        this.MacABuscar = MacABuscar;
+        this.searchedMAC = MacABuscar;
     }
 
     @Override
     protected void onPreExecute() {
         int diagonal = Integer.bitCount(mascara);//diagonal de la red
-        tamaño = (int) Math.pow(2,(32-diagonal))-3;
+        size = (int) Math.pow(2,(32-diagonal))-3;
         inicio = Integer.reverse(red);
     }
 
     @Override
     protected Void doInBackground(Void... params) {
         mPool = Executors.newFixedThreadPool(THREADS);
-        for (int i = inicio; i <= inicio+tamaño-1; i++) {
-            iniciar(i);
+        for (int i = inicio; i <= inicio+size-1; i++) {
+            start(i);
         }
         mPool.shutdown();
         try {
@@ -66,7 +68,8 @@ public class scanOne extends AsyncTask<Void, Void, Void> {
             mPool.shutdownNow();
             Thread.currentThread().interrupt();
         }finally{
-            IPEncontrada = getAddressfromHardware(MacABuscar).replaceAll("\\.", "p");;
+            IPFound = getAddressfromHardware(searchedMAC).replaceAll("\\.", "p");;
+            Log.w(TAG,"ip: "+IPFound);
         }
 
         return null;
@@ -75,7 +78,7 @@ public class scanOne extends AsyncTask<Void, Void, Void> {
     @Override
     protected void onPostExecute(Void v) {
         if (delegate != null) {
-            delegate.processFinish(IPEncontrada);//si se encontraron dispositivos nuevos
+            delegate.processFinish(IPFound);//si se encontraron dispositivos nuevos
         }
     }
 
@@ -94,16 +97,16 @@ public class scanOne extends AsyncTask<Void, Void, Void> {
         super.onCancelled();
     }
 
-    private void iniciar(int i) {
+    private void start(int i) {
         if(!mPool.isShutdown()) {
-            mPool.execute(new buscarEnLaRed(getStringFromReversedIP(i)));
+            mPool.execute(new networkSearch(getStringFromReversedIP(i)));
         }
     }
 
-    private class buscarEnLaRed implements Runnable {
+    private class networkSearch implements Runnable {
         private String addr;
 
-        buscarEnLaRed(String addr) {
+        networkSearch(String addr) {
             this.addr = addr;
         }
 
@@ -130,8 +133,8 @@ public class scanOne extends AsyncTask<Void, Void, Void> {
                 ((i >>> 24) & 0xFF));
     }
 
-    private static String getAddressfromHardware(String hw) {
-        String DisIP = "";
+    private static String getAddressfromHardware(String hw) {//IP from MAC
+        String devIP = "";
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(new FileReader("/proc/net/arp"));
@@ -139,10 +142,13 @@ public class scanOne extends AsyncTask<Void, Void, Void> {
             while ((line = bufferedReader.readLine()) != null) {
                 String[] splitted = line.split(" +");
                 if (splitted != null && splitted.length >= 4) {
-                    String ip = splitted[0];
-                    String mac = splitted[3];
-                    if (mac.equals(hw.toLowerCase()))
-                        DisIP = ip.replaceAll("\\.","p");
+                    if(!(splitted[3].equals("00:00:00:00:00:00"))) {
+                        Log.w(TAG, "LINE " + line);
+                        String ip = splitted[0];
+                        String mac = splitted[3];
+                        if (mac.equals(hw.toLowerCase()))
+                            devIP = ip.replaceAll("\\.", "p");
+                    }
                 }
             }
         } catch (FileNotFoundException e) {
@@ -154,6 +160,6 @@ public class scanOne extends AsyncTask<Void, Void, Void> {
                 e.printStackTrace();
             }
         }
-        return DisIP;
+        return devIP;
     }
 }

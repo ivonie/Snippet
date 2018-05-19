@@ -21,8 +21,6 @@ import com.nodomain.ivonne.snippet.R;
 import com.nodomain.ivonne.snippet.tools.dataManager;
 import com.nodomain.ivonne.snippet.services.backgroundActivity;
 
-import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_SSID;
-
 public class snippetNewActivity extends AppCompatActivity implements Button.OnClickListener{
 
     static final String TAG = "NEW";
