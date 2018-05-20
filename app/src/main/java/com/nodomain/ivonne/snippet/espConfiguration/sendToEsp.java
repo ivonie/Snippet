@@ -25,7 +25,7 @@ public class sendToEsp extends AsyncTask<String,Void,String> {
     private auxiliarTools misFunciones;
     private String TAG = "sendToEsp";
     private Context mContext;
-    private int TIMEOUT_CONNECTION = 10000;//cuanto tiempo espera para que el ESP conteste
+    private int TIMEOUT_CONNECTION = 10;//cuanto tiempo espera para que el ESP conteste
     public sendToEsp() {
     }
     public sendToEsp(Context context, AsyncResponse delegate) {
