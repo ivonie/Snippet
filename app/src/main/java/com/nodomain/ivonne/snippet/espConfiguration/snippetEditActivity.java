@@ -27,8 +27,18 @@ import com.nodomain.ivonne.snippet.services.monitorWiFi;
 import com.nodomain.ivonne.snippet.app.timerActivity;
 
 import static com.nodomain.ivonne.snippet.app.MainActivity.MONITOR_WIFI;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CLOSER;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_NAME;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_PSW;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_SETOFF;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_STATUS;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_FOO;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_IMAGE;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_MAC;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_NAME;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_PSW;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_ERROR;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_OK;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_TYPE;
 import static com.nodomain.ivonne.snippet.espConfiguration.snippetSaveActivity.SELECT_IMAGE_CODE;
 
@@ -151,7 +161,7 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
         else if (view.getId() == deviceImage.getId()){
             Intent getImagen = new Intent(snippetEditActivity.this,selectImageActivity.class);
             getImagen.putExtra(ESP_TYPE, myDevice.getDevType());
-            getImagen.putExtra("ACTUAL", newImge);
+            getImagen.putExtra("CURRENT", newImge);
             startActivityForResult(getImagen,SELECT_IMAGE_CODE);
         }
         else if (view.getId() == buttonTimer.getId()){
@@ -161,7 +171,7 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
             startActivity(intent);
         }
         else if (view.getId() == buttonSave.getId()){
-            aplicarcambios();
+            applyChanges();
         }
         else if (view.getId() == buttonCancel.getId()){
             setResult(RESULT_CANCELED);
@@ -169,11 +179,11 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
         }
     }
 
-    public void aplicarcambios(){
+    public void applyChanges(){
         if (!devicePsw.getText().toString().equals(myDevice.getDevPsw()))
-            enviarCambiosESP("password");
+            sendChangesToESP(ESP_PSW);
         else if (!deviecName.getText().toString().equals(myDevice.getDevName()))
-            enviarCambiosESP("nombre");
+            sendChangesToESP(ESP_NAME);
         else if (setOff){
             setOff = false;
             sendToEsp conectarESP = new sendToEsp(getApplicationContext(), new sendToEsp.AsyncResponse() {
@@ -182,7 +192,7 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
                     String value[]= output.split(",");
                     switch (value[0]){
                         case "ON":{
-                            enviarCambiosESP("setOff");
+                            sendChangesToESP("setOff");
                             break;
                         }
                         case "OFF":{
@@ -192,20 +202,20 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
                     }
                 }
             });
-            conectarESP.execute("ESP8266,7STATUS", myDevice.getDevMac(), myDevice.getDevFoo());
+            conectarESP.execute(ESP_CMD_STATUS+oldPsw+ESP_CLOSER, myDevice.getDevMac(), myDevice.getDevFoo());
         }
         else if (!myDevice.getDevOn().equals(String.valueOf(autoOn.isChecked()))){
             myDevice.setDevOn(String.valueOf(autoOn.isChecked()));
-            aplicarcambios();
+            applyChanges();
             //TODO: FUNCION QUE manda a encender el foco al detectar la red wifi
         }
         else if (!myDevice.getDevImage().equals(newImge)){
             myDevice.setDevImage(newImge);
-            aplicarcambios();
+            applyChanges();
         }
         else if (!myDevice.getDevHouseSpace().equals(spacesList[position])){
             myDevice.setDevHouseSpace(spacesList[position]);
-            aplicarcambios();
+            applyChanges();
         }
         else if(!myDevice.getDevOn().equals(Boolean.toString(autoOn.isChecked()))){
             myDevice.setDevOn(Boolean.toString(autoOn.isChecked()));
@@ -217,7 +227,7 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
                 }
             }
             Log.w("EDITAR_S", "encendido automatico: "+Boolean.toString(autoOn.isChecked()));
-            aplicarcambios();
+            applyChanges();
         }
         else{
             myDM.addorUpdateDevice(myDevice);
@@ -227,55 +237,54 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
         }
     }
 
-    private void enviarCambiosESP(String cambio){
+    private void sendChangesToESP(String cambio){
         final sendToEsp enviarCambios = new sendToEsp(snippetEditActivity.this, new sendToEsp.AsyncResponse() {
             @Override
             public void processFinish(String output) {
                 String[] valores = output.split(",");
                 switch (valores[0]){
-                    case "ERROR":{
+                    case ESP_RES_ERROR:{
                         if (!devicePsw.getText().toString().equals(oldPsw)) {
                             oldPsw = devicePsw.getText().toString();
-                            enviarCambiosESP("password");
+                            sendChangesToESP(ESP_PSW);
                         } else {
                             Toast.makeText(snippetEditActivity.this, getResources().getString(R.string.error7), Toast.LENGTH_SHORT).show();
                             buttonSave.setEnabled(false);
                         }
                         break;
                     }
-                    case "CORRECTO":{
-                        if (valores[1].equals("PASSWORD")) {
+                    case ESP_RES_OK:{
+                        if (valores[1].equals(ESP_PSW)) {
                             myDevice.setDevPsw(devicePsw.getText().toString());
                             oldPsw = myDevice.getDevPsw();
                         }
-                        else if (valores[1].equals("NOMBRE"))
+                        else if (valores[1].equals(ESP_NAME))
                             myDevice.setDevName(deviecName.getText().toString());
-                        aplicarcambios();
+                        applyChanges();
                         break;
                     }
                 }
             }
         });
         switch (cambio){
-            case "nombre":{
-                enviarCambios.execute("ESP8266,49\n10"+ deviecName.getText().toString()+"10\n1115\n16"+ oldPsw +"16\n17", myDevice.getDevMac(), myDevice.getDevFoo());//FIXME: 4 cambiar nombre
+            case ESP_NAME:{
+                enviarCambios.execute(ESP_CMD_NAME+oldPsw+","+ deviecName.getText().toString()
+                        +ESP_CLOSER, myDevice.getDevMac(), myDevice.getDevFoo());
                 break;
             }
-            case "password":{
-                enviarCambios.execute("ESP8266,59\n10"+ devicePsw.getText()
-                        .toString()+"10\n1115\n16"+ oldPsw +"16\n17",
-                        myDevice.getDevMac(), myDevice.getDevFoo());//FIXME: 5 cambiar password
+            case ESP_PSW:{
+                enviarCambios.execute(ESP_CMD_PSW+ oldPsw+","+ devicePsw.getText().toString()
+                        +ESP_CLOSER, myDevice.getDevMac(), myDevice.getDevFoo());
                 break;
             }
             case "setOff":{
                 WifiManager wifiManager = (WifiManager)getApplicationContext()
                         .getSystemService(Context.WIFI_SERVICE);
-                int esteAndroid = wifiManager.getDhcpInfo().ipAddress;
-                new sendToEsp().execute("ESP8266,<13\n14"+getStringFromIP(esteAndroid)+
-                        "14\n1515\n16"+ oldPsw +"16\n17", myDevice.getDevMac(),
-                        myDevice.getDevFoo());//FIXME: < (12) configurar setOff automatico
+                int thisAndroid = wifiManager.getDhcpInfo().ipAddress;
+                new sendToEsp().execute(ESP_CMD_SETOFF+getStringFromIP(thisAndroid)+ ","+ oldPsw
+                        +ESP_CLOSER, myDevice.getDevMac(), myDevice.getDevFoo());//FIXME: < (12) configurar setOff automatico
                 //TODO: si el usuario selecciono que sea permanente, guardarlo en la base de datos
-                aplicarcambios();
+                applyChanges();
                 break;
             }
         }
@@ -307,7 +316,7 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == SELECT_IMAGE_CODE){
             if (resultCode == RESULT_OK) {
-                newImge = data.getStringExtra("IMAGEN");
+                newImge = data.getStringExtra(ESP_IMAGE);
                 if (!myDevice.getDevImage().equals(newImge)) {
                     deviceImage.setImageResource(getApplicationContext().getResources().getIdentifier(newImge, "drawable", getApplicationContext().getPackageName()));
                     buttonSave.setEnabled(true);

@@ -16,17 +16,20 @@ import com.nodomain.ivonne.snippet.R;
 
 public class imageAdapter extends BaseAdapter {
     private Context mContext;
-    private String tipo;
-    private String imagen_seleccionada;
+    private String type;
+    private String selectedImage;
 
-    public imageAdapter(Context c, String tipo, String imagen_seleccionada) {
+    public imageAdapter(Context c, String type, String selectedImage) {
         mContext = c;
-        this.tipo = tipo;
-        this.imagen_seleccionada = imagen_seleccionada;
+        this.type = type;
+        this.selectedImage = selectedImage;
     }
 
     public int getCount() {
-        switch (tipo){
+        switch (type){
+            case "DIMMER":{
+                return dimmer.length;
+            }
             default:{
                 return focos.length;
             }
@@ -34,7 +37,7 @@ public class imageAdapter extends BaseAdapter {
     }
 
     public Object getItem(int position) {
-        switch (tipo){
+        switch (type){
             case "DIMMER":
                 return dimmer[position];
             default:
@@ -43,7 +46,7 @@ public class imageAdapter extends BaseAdapter {
     }
 
     public long getItemId(int position) {
-        switch (tipo) {
+        switch (type) {
             case "DIMMER":
                 return mContext.getResources().getIdentifier(dimmer[position], "drawable", mContext.getPackageName());
             default:
@@ -52,13 +55,13 @@ public class imageAdapter extends BaseAdapter {
     }
 
     public void setSelectedItem(int position){
-        switch (tipo){
+        switch (type){
             case "DIMMER":{
-                imagen_seleccionada = dimmer[position];
+                selectedImage = dimmer[position];
                 break;
             }
             default:{
-                imagen_seleccionada = focos[position];
+                selectedImage = focos[position];
                 break;
             }
         }
@@ -75,10 +78,10 @@ public class imageAdapter extends BaseAdapter {
             imageView = (ImageView) convertView;
         }
 
-        switch (tipo){
+        switch (type){
             case "DIMMER":{
                 imageView.setImageResource(mContext.getResources().getIdentifier(dimmer[position], "drawable", mContext.getPackageName()));
-                if (dimmer[position].equals(imagen_seleccionada)){
+                if (dimmer[position].equals(selectedImage)){
                     if (Build.VERSION.SDK_INT >= 22)
                         imageView.setBackground(mContext.getDrawable(R.drawable.borde_resaltado));
                     else
@@ -96,7 +99,7 @@ public class imageAdapter extends BaseAdapter {
             }
             default:{
                 imageView.setImageResource(mContext.getResources().getIdentifier(focos[position], "drawable", mContext.getPackageName()));
-                if (focos[position].equals(imagen_seleccionada)){
+                if (focos[position].equals(selectedImage)){
                     if (Build.VERSION.SDK_INT >= 22)
                         imageView.setBackground(mContext.getDrawable(R.drawable.borde_resaltado));
                     else

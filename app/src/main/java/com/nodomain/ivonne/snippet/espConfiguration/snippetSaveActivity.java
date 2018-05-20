@@ -19,6 +19,7 @@ import com.nodomain.ivonne.snippet.tools.dataManager;
 import com.nodomain.ivonne.snippet.services.backgroundActivity;
 
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_MAC;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_FAILED;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_TYPE;
 import static com.nodomain.ivonne.snippet.espConfiguration.snippetNewActivity.ACTION;
 import static com.nodomain.ivonne.snippet.espConfiguration.snippetNewActivity.CONFIGURE_SNIPPET_CODE;
@@ -104,8 +105,9 @@ public class snippetSaveActivity extends AppCompatActivity implements Button.OnC
 
     private boolean readData(String data){
         String[] value = data.split(",");
-        if (value.length < 2)
-            return false;//mesage received was "reconnect"
+        Log.w(TAG,data+" "+Integer.toString(value.length));
+        if (value[0].equals(ESP_RES_FAILED))
+            return false;//mesage received was "FAILCONNECTTOAP"
         else {
             snippetFoo = value[0];
             if (value.length > 1)
@@ -165,12 +167,19 @@ public class snippetSaveActivity extends AppCompatActivity implements Button.OnC
         switch (requestCode){
             case CONFIGURE_SNIPPET_CODE: {
                 if (resultCode == RESULT_OK) {
-                    Toast.makeText(getApplicationContext(), getResources()
+                    Boolean success = readData(data.getStringExtra(PARAM1));
+                    if (!success){
+                        retry = true;
+                        retryConfigure();
+                    }
+                    else {
+                        Toast.makeText(getApplicationContext(), getResources()
                                 .getString(R.string.mensaje5), Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(snippetSaveActivity.this, backgroundActivity.class);
-                    intent.putExtra(ACTION, snippetNewActivity.RECONNECT);
-                    intent.putExtra(PARAM1, networkName);
-                    startActivityForResult(intent, RECONNECT_CODE);//reconnect to get esp configuration data
+                        Intent intent = new Intent(snippetSaveActivity.this, backgroundActivity.class);
+                        intent.putExtra(ACTION, snippetNewActivity.RECONNECT);
+                        intent.putExtra(PARAM1, networkName);
+                        startActivityForResult(intent, RECONNECT_CODE);//reconnect to local network
+                    }
                 }
                 else {
                     retryConfigure();
@@ -187,11 +196,6 @@ public class snippetSaveActivity extends AppCompatActivity implements Button.OnC
                 break;
             }
             case RECONNECT_CODE:{//RECONECTAR}
-                Boolean success = readData(data.getStringExtra(PARAM1));
-                if (!success){
-                    retry = true;
-                    retryConfigure();
-                }
             }
         }
         super.onActivityResult(requestCode, resultCode, data);

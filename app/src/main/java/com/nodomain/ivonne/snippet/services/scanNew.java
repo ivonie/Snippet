@@ -3,6 +3,7 @@ package com.nodomain.ivonne.snippet.services;
 import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.nodomain.ivonne.snippet.objects.Device;
 import com.nodomain.ivonne.snippet.tools.dataManager;
@@ -16,10 +17,14 @@ import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_SCAN;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_CONNECTED;
@@ -32,7 +37,8 @@ import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_SC
 public class scanNew extends AsyncTask<Void, Void, Void> {
     static final String TAG = "SCAN";
     private AsyncResponse delegate = null;
-    private final static int TIMEOUT_CONNECTION = 1500; //milisegundos
+    private final static int PING_TIMEOUT = 500; //milisegundos
+    private final static int SOCKET_TIMEOUT = 10; //milisegundos
     private final static int TIMEOUT_SCAN = 3600; // seconds
     private final static int TIMEOUT_SHUTDOWN = 10; // seconds
     private final static int THREADS = 10;
@@ -48,10 +54,13 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
     private int size = 0;
     private int inicio = 0;
 
+    private ArrayList<String> addresses;
+
     public scanNew(Context context, AsyncResponse delegate) {
         this.context = context;
         myDM = new dataManager(context);
         this.delegate = delegate;
+        addresses=new ArrayList<String>();
     }
 
     public void setearRed(int mascara, int red, int gate) {
@@ -95,6 +104,7 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
     @Override
     protected void onPostExecute(Void v) {
         if (delegate != null) {
+            Log.w(TAG,"SCAN COMPLETED");
             delegate.processFinish(newDevices);
         }
     }
@@ -136,7 +146,12 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
                 try {
                     InetAddress h = InetAddress.getByName(addr);
                     // Native InetAddress check
-                    if (h.isReachable(TIMEOUT_CONNECTION)) {
+                    if (h.isReachable(PING_TIMEOUT)) {
+                        Log.w(TAG,"ping successfull to "+addr);
+                        Device myDevice = new Device();
+                        myDevice.setDevFoo(addr.replaceAll("\\.", "p"));
+                        myDevice.setDevMac(getHardwareAddress(addr));
+                        reachable(myDevice);
                         return;
                     }
                 } catch (IOException e) {
@@ -153,10 +168,13 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
             while ((line = bufferedReader.readLine()) != null) {
                 String[] splitted = line.split(" +");
                 if (splitted != null && splitted.length >= 4) {
-                    Device myDevice = new Device();
-                    myDevice.setDevFoo(splitted[0].replaceAll("\\.", "p"));
-                    myDevice.setDevMac(splitted[3]);
-                    reachable(myDevice);
+                    if(!(splitted[3].equals("00:00:00:00:00:00")) && !(splitted[0].equals("IP"))) {
+                        Log.w(TAG,"correct MAC address for "+splitted[0]);
+                        Device myDevice = new Device();
+                        myDevice.setDevFoo(splitted[0].replaceAll("\\.", "p"));
+                        myDevice.setDevMac(splitted[3]);
+                        reachable(myDevice);
+                    }
                 }
             }
         } catch (FileNotFoundException e) {
@@ -171,18 +189,22 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
     }
 
     private void reachable(Device host) {
-        if (myDM.deviceExists(host.getDevMac().toUpperCase()))
+        if (myDM.deviceExists(host.getDevMac().toUpperCase())) {
             myDM.updateIP(host.getDevMac(), host.getDevFoo());
+        }
         else{
-            connectWithNew(host);
+            if (!(addresses.contains(host.getDevFoo().replaceAll("p", "\\."))))
+                connectWithNew(host);
         }
     }
 
     private void connectWithNew(Device host){
+        Socket socket = new Socket();
         try {
             InetAddress netadd = InetAddress.getByName(host.getDevFoo().replaceAll("p", "\\."));
-            Socket socket = new Socket();
-            socket.connect(new InetSocketAddress(netadd, 5000), TIMEOUT_CONNECTION);
+            Log.w(TAG,"attempting socket connection to "+host.getDevFoo());
+            addresses.add(host.getDevFoo().replaceAll("p", "\\."));
+            socket.connect(new InetSocketAddress(netadd, 5000),SOCKET_TIMEOUT);
             if (socket.isConnected()){
                 PrintStream output = new PrintStream(socket.getOutputStream());
                 output.println(ESP_CMD_SCAN);
@@ -203,12 +225,19 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
                     myDevice.setDevHouseSpace("Nuevo");
                     newDevices = true;
                     myDM.addorUpdateDevice(myDevice);
+                    Log.w(TAG,"addding new ESP to database "+host.getDevFoo());
                 }
-
+            }
+        } catch (SocketTimeoutException ex) {
+            if(socket.isConnected()){
+                Log.w(TAG,host.getDevFoo()+" timeout");
+                try{
+                    socket.close();
+                    Log.w(TAG,"socket close "+host.getDevFoo());
+                }catch (IOException e) {}
             }
         } catch (UnknownHostException ex) {
-        } catch (IOException ex) {
-        }
+        }catch (IOException ex) {}
     }
 
     private static String getStringFromReversedIP(int ip_reverse) {
@@ -217,5 +246,36 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
                 ((i >>> 8) & 0xFF) + "." +
                 ((i >>> 16) & 0xFF) + "." +
                 ((i >>> 24) & 0xFF));
+    }
+
+    private static String getHardwareAddress(String ip) {
+        String hw = "00:00:00:00:00:00";
+        BufferedReader bufferedReader = null;
+        try {
+            if (ip != null) {
+                String ptrn = String.format("^%s\\s+0x1\\s+0x2\\s+([:0-9a-fA-F]+)\\s+\\*\\s+\\w+$", ip.replace(".", "\\."));
+                Pattern pattern = Pattern.compile(ptrn);
+                bufferedReader = new BufferedReader(new FileReader("/proc/net/arp"), 8 * 1024);
+                String line;
+                Matcher matcher;
+                while ((line = bufferedReader.readLine()) != null) {
+                    matcher = pattern.matcher(line);
+                    if (matcher.matches()) {
+                        hw = matcher.group(1);
+                        break;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            return hw;
+        } finally {
+            try {
+                if(bufferedReader != null) {
+                    bufferedReader.close();
+                }
+            } catch (IOException e) {
+            }
+        }
+        return hw;
     }
 }

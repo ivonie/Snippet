@@ -10,9 +10,11 @@ import android.widget.GridView;
 import com.nodomain.ivonne.snippet.R;
 import com.nodomain.ivonne.snippet.adapters.imageAdapter;
 
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_TYPE;
+
 public class selectImageActivity extends AppCompatActivity implements AdapterView.OnItemClickListener{
 
-    private imageAdapter miAdaptador;
+    private imageAdapter myAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,12 +22,12 @@ public class selectImageActivity extends AppCompatActivity implements AdapterVie
         setContentView(R.layout.activity_seleccionar_imagen);
         GridView imagenes = (GridView) findViewById(R.id.layout_imagenes);
 
-        miAdaptador = new imageAdapter(this, getIntent().getStringExtra("TIPO"), getIntent().getStringExtra("ACTUAL"));
-        imagenes.setAdapter(miAdaptador);
+        myAdapter = new imageAdapter(this, getIntent().getStringExtra(ESP_TYPE), getIntent().getStringExtra("CURRENT"));
+        imagenes.setAdapter(myAdapter);
         imagenes.setOnItemClickListener(this);
 
-        Button guardar = (Button) findViewById(R.id.button_save);
-        guardar.setOnClickListener(new View.OnClickListener() {
+        Button save = (Button) findViewById(R.id.button_save);
+        save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 finish();
@@ -44,10 +46,10 @@ public class selectImageActivity extends AppCompatActivity implements AdapterVie
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-        String imagen = (String) miAdaptador.getItem(position);
-        miAdaptador.setSelectedItem(position);
-        miAdaptador.notifyDataSetChanged();
-        setResult(RESULT_OK, getIntent().putExtra("IMAGEN",imagen));
+        String imagen = (String) myAdapter.getItem(position);
+        myAdapter.setSelectedItem(position);
+        myAdapter.notifyDataSetChanged();
+        setResult(RESULT_OK, getIntent().putExtra("IMAGE",imagen));
         //finish();
     }
 

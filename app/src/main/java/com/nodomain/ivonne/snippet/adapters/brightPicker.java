@@ -281,7 +281,7 @@ public class brightPicker extends View{
                 state = "OFF";
                 sizeLargeText = getResources().getDimensionPixelSize(R.dimen.texto_normal)*4/5;
             }
-            onProgressRefresh (scale, (int) selectedBright);
+            onProgressRefresh ((int) selectedBright);
         }
     }
 
@@ -292,7 +292,7 @@ public class brightPicker extends View{
             sizeLargeText = getResources().getDimensionPixelSize(R.dimen.texto_normal)*4/5;
             invalidate();
             brightHSV = 90;
-            onProgressRefresh (scale, 0);
+            onProgressRefresh (0);
         }
         else{
             onOff = true;
@@ -300,7 +300,7 @@ public class brightPicker extends View{
             sizeLargeText = getResources().getDimensionPixelSize(R.dimen.texto_normal)*2/3;
             invalidate();
             brightHSV = -90;
-            onProgressRefresh (scale, 100);
+            onProgressRefresh (scale);
         }
         invalidate();
     }
@@ -312,7 +312,7 @@ public class brightPicker extends View{
         }
     }
 
-    void onProgressRefresh(float scale, int progress) {
+    void onProgressRefresh(int progress) {
         if (mOnSeekBarChangeListener != null) {
             mOnSeekBarChangeListener.onProgressChanged(this, progress);
         }

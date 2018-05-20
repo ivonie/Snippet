@@ -48,7 +48,7 @@ public class snippetNewActivity extends AppCompatActivity implements Button.OnCl
     private CheckBox showMAC;
 
     private Context context = this;
-    private String devPsw = "0000";
+    private String devPsw = "----";
     private String networkSSID;
     private String networkPSW;
 

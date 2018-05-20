@@ -33,6 +33,7 @@ public class espManager {
     public static final String ESP_TYPE = "TYPE";
     public static final String ESP_IMAGE = "IMAGE";
     public static final String ESP_STATUS = "STATUS";
+    public static final String ESP_PSW = "PSW";
 
     /*Snippet AP network*/
     public static final String ESP_AP_SSID = "ESP8266";
@@ -40,7 +41,6 @@ public class espManager {
 
     static final String ESP_HEADER = "ESP8266,";
     public static final String ESP_CLOSER = ",\r";
-    public static final String ESP_PSW = "---";
 
     /* COMMANDS */
     public static final String ESP_CMD_TOOGLE = ESP_HEADER+"1,";
@@ -50,22 +50,21 @@ public class espManager {
     public static final String ESP_CMD_PSW = ESP_HEADER+"5,";
     public static final String ESP_CMD_STATUS = ESP_HEADER+"7,";
     public static final String ESP_CMD_DIMMER_SEND = ESP_HEADER+"8,";
-    public static final String ESP_CMD_DIMMER_CLOSE = "e\r";
+    public static final String ESP_CMD_DIMMER_CLOSE = "e"+ESP_CLOSER;
     public static final String ESP_CMD_SCAN = ESP_HEADER+"9"+ESP_CLOSER;
     public static final String ESP_CMD_STATUS_DIMMER = ESP_HEADER+":,";//10
     public static final String ESP_CMD_TIMER = ESP_HEADER+";,";//11
-    //12 <
+    public static final String ESP_CMD_SETOFF = ESP_HEADER+"<,";//12
     public static final String ESP_CMD_MAC = ESP_HEADER+"=";//13
 
     /* RESULTS*/
-    public static final String ESP_RES_OK = "CORRECTO";
     public static final String ESP_RES_CONNECTED = "CONECTADO";
-    public static final String ESP_RES_RETRY = "FAILEDCONNECTTOAP";
-    public static final String ESP_RES_ERROR = "ERROR";
-    public static final String ESP_RES_FAILED = "FAILEDCONNECTTOAP";
+    public static final String ESP_RES_FAILED = "FAILCONNECTTOAP";
     public static final String ESP_RES_RECEIVED = "RECIBIDO";
     public static final String ESP_RES_DIMMER = "VALUEOFDIMMER";
     public static final String ESP_RES_SCAN = "SCANOK";
+    public static final String ESP_RES_OK = "CORRECTO";
+    public static final String ESP_RES_ERROR = "ERROR";
 
     /*Snippet types*/
     public static final String LIGHT_BULB = "FOCO";
@@ -205,9 +204,6 @@ public class espManager {
             return false;
         }
     }
-
-
-
 
 
     public String sendToESPfromService(final String myFoo, final String command){

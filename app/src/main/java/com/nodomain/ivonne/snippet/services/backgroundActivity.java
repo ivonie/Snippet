@@ -30,6 +30,7 @@ import static com.nodomain.ivonne.snippet.app.showDevicesActivity.CORRECT_IP;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_AP_SSID;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CLOSER;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_ESTADO;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_CMD_MAC;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_PSW;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_CONNECTED;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_FAILED;
@@ -77,9 +78,31 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
         FragmentManager fm = getFragmentManager();
         intentRetenided = (retainIntent) fm.findFragmentByTag(TAG_RETAINED_INTENT);
 
+        switch (action){
+            case VALIDATE_PSW:{
+                text.setText(getString(R.string.mensaje1));
+                break;
+            }
+            case RECONNECT:{
+                text.setText(getString(R.string.mensaje2));
+                break;
+            }
+            case SHOW_MAC:{
+                text.setText(getString(R.string.mensaje3));
+                break;
+            }
+            case CONFIGURE_SNIPPET:{
+                text.setText(getString(R.string.mensaje4));
+                break;
+            }
+            case SCAN_NEW:{
+                text.setText(getString(R.string.mensaje6));
+                break;
+            }
+        }
+
         if (intentRetenided == null) {
             // add the fragment
-            Log.w(TAG,"new fragment, not Retained");
             intentRetenided = new retainIntent();
             fm.beginTransaction().add(intentRetenided, TAG_RETAINED_INTENT).commit();
 
@@ -107,22 +130,14 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
                     break;
                 }
                 case SHOW_MAC:{
-                    intent.setAction(SHOW_MAC);
-                    context.startService(intent);
+                    handleAccionRequestMac();
                     break;
                 }
                 case CONFIGURE_SNIPPET:{
-                    //intent.setAction(CONFIGURE_SNIPPET);
                     String param1 = getIntent().getStringExtra(PARAM1);//ESP NAME
                     String param2 = getIntent().getStringExtra(PARAM2);//ESP PSW
                     String param3 = getIntent().getStringExtra(PARAM3);//NETWORK NAME
                     String param4 = getIntent().getStringExtra(PARAM4);//NETWORK PSW
-                    /*
-                    intent.putExtra(PARAM1,param1);
-                    intent.putExtra(PARAM2,param2);
-                    intent.putExtra(PARAM3,param3);
-                    intent.putExtra(PARAM4,param4);
-                    context.startService(intent);*/
                     handleAccionConfigureEsp(param1, param2, param3, param4);
                     break;
                 }
@@ -169,31 +184,6 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
 
             intentRetenided.setIntent(intent);
         }
-        else
-            Log.w(TAG,"Retained intent");
-
-        switch (action){
-            case VALIDATE_PSW:{
-                text.setText(getString(R.string.mensaje1));
-                break;
-            }
-            case RECONNECT:{
-                text.setText(getString(R.string.mensaje2));
-                break;
-            }
-            case SHOW_MAC:{
-                text.setText(getString(R.string.mensaje3));
-                break;
-            }
-            case CONFIGURE_SNIPPET:{
-                text.setText(getString(R.string.mensaje4));
-                break;
-            }
-            case SCAN_NEW:{
-                text.setText(getString(R.string.mensaje6));
-                break;
-            }
-        }
     }
 
     public static class retainIntent extends Fragment {
@@ -237,9 +227,10 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
                                     handleResult(null, false);
                                 }
                             }
+
                         }
                     });
-                    sendingToEsp.execute(SOCKET_CONNECT + networkSSID.replaceAll("\"","") + "," + contrasenaSSID + "," + ESPname + "," + ESP_PSW + ESP_CLOSER, null, myTools.intToIp(gatewayIP));
+                    sendingToEsp.execute(SOCKET_CONNECT + networkSSID.replaceAll("\"","") + "," + contrasenaSSID + "," + ESPname + "," + PARAM2 + ESP_CLOSER, null, myTools.intToIp(gatewayIP));
                 } else{
                     myEspManager.borrarEspWifi();
                     handleResult(null, false);
@@ -256,7 +247,7 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
             @Override
             public void onTick(long l) {
                 counter ++;
-                if (counter == 10) {/*wait exactly 10 seconds*/
+                if (counter == 11) {/*wait exactly 10 seconds*/
                     myEspManager.setOnConnectedListener(new espManager.OnConnectedListener() {
                         @Override
                         public void onConnected(boolean connected) {
@@ -304,6 +295,42 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
                 this.cancel();
             }
         }.start();
+    }
+
+    private void handleAccionRequestMac() {
+        myEspManager.setOnConnectedListener(new espManager.OnConnectedListener() {
+            @Override
+            public void onConnected(boolean connected) {
+                if (connected) {
+                    WifiManager wifiManager = (WifiManager) getApplicationContext()
+                            .getSystemService(Context.WIFI_SERVICE);
+                    DhcpInfo info = wifiManager.getDhcpInfo();
+                    int gatewayIP = info.gateway;
+                    sendToEsp sendingToEsp = new sendToEsp(getApplicationContext(), new sendToEsp.AsyncResponse() {
+                        @Override
+                        public void processFinish(String output) {
+                            String values[] = output.split(",");
+                            switch (values[0]) {
+                                case ESP_RES_RECEIVED: {
+                                    myEspManager.borrarEspWifi();
+                                    handleResult(values[1], true);
+                                    break;
+                                }
+                                default: {
+                                    myEspManager.borrarEspWifi();
+                                    handleResult(null, false);
+                                }
+                            }
+                        }
+                    });
+                    sendingToEsp.execute(ESP_CMD_MAC, null, myTools.intToIp(gatewayIP));
+                } else {
+                    myEspManager.borrarEspWifi();
+                    handleResult(null, false);
+                }
+            }
+        });
+        myEspManager.connectToEsp();
     }
 
     protected void handleResult(String text, boolean result) {

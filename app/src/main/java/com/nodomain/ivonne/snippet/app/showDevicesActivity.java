@@ -54,7 +54,7 @@ import static com.nodomain.ivonne.snippet.espConfiguration.snippetNewActivity.AC
 import static com.nodomain.ivonne.snippet.espConfiguration.snippetNewActivity.PARAM1;
 import static com.nodomain.ivonne.snippet.espConfiguration.snippetNewActivity.PARAM2;
 
-//TODO: Iniciar actividad de fondo que monitorea constantemente el state de los focos y reportará
+//TODO: Iniciar actividad de fondo que monitorea constantemente el estado de los focos y reportará
 //a actividad "desplegar" si es que esta abierta
 
 public class showDevicesActivity extends AppCompatActivity implements
@@ -144,8 +144,9 @@ public class showDevicesActivity extends AppCompatActivity implements
             });
             switch (tipo) {
                 case LIGHT_BULB: {
-                    conectarESP.execute(ESP_CMD_TOOGLE+ESP_PSW+ESP_CLOSER, deviceList.get(position).get("mac"),
-                            deviceList.get(position).get(ESP_FOO));//FIXME: AGREGAR psw
+                    conectarESP.execute(ESP_CMD_TOOGLE+deviceList.get(position).get(ESP_PSW)+
+                            ESP_CLOSER, deviceList.get(position).get(ESP_MAC),
+                            deviceList.get(position).get(ESP_FOO));
                     break;
                 }
                 case LIGHT_DIMMER: {
@@ -153,6 +154,7 @@ public class showDevicesActivity extends AppCompatActivity implements
                     intent.putExtra(ESP_MAC, deviceList.get(position).get(ESP_MAC));
                     intent.putExtra(ESP_FOO, deviceList.get(position).get(ESP_FOO));
                     intent.putExtra(ESP_NAME, deviceList.get(position).get(ESP_NAME));
+                    intent.putExtra(ESP_MAC, deviceList.get(position).get(ESP_MAC));
                     startActivityForResult(intent, DIMMER_ACTIVITY_CODE);
                     break;
                 }
@@ -250,6 +252,7 @@ public class showDevicesActivity extends AppCompatActivity implements
                     datum.put(ESP_NAME, newDevice.getDevName());
                     datum.put(ESP_MAC, newDevice.getDevMac());
                     datum.put(ESP_FOO, newDevice.getDevFoo());
+                    datum.put(ESP_PSW, newDevice.getDevPsw());
                     datum.put(ESP_TYPE, newDevice.getDevType());
                     datum.put(ESP_IMAGE, newDevice.getDevImage());
                     datum.put(ESP_STATUS, getDefaultImage(newDevice.getDevImage()));
@@ -276,16 +279,16 @@ public class showDevicesActivity extends AppCompatActivity implements
                         String validFoo = new espManager(getApplicationContext())
                                     .getValidFoo(devices.get(i).getDevMac(),
                                     devices.get(i).getDevFoo());
-                        Log.w(TAG,"IP: "+validFoo);
                         //if (validFoo.equals("ERROR") || validFoo.equals("") || validFoo.equals("0p0p0p0"))
                         //    scanForFoo(devices.get(i).getDevMac());
                         //else
-                            if (!validFoo.equals(devices.get(i).getDevFoo()))
+                        if (!validFoo.equals(devices.get(i).getDevFoo()))
                             datamanager.updateIP(devices.get(i).getDevMac(),validFoo);
                         Map<String, String> datum = new HashMap<>(2);
                         datum.put(ESP_NAME, devices.get(i).getDevName());
                         datum.put(ESP_MAC, devices.get(i).getDevMac());
                         datum.put(ESP_FOO, validFoo);
+                        datum.put(ESP_PSW, devices.get(i).getDevPsw());
                         datum.put(ESP_TYPE, devices.get(i).getDevType());
                         datum.put(ESP_IMAGE, devices.get(i).getDevImage());
                         datum.put(ESP_STATUS, getDefaultImage(devices.get(i).getDevImage()));
@@ -322,7 +325,7 @@ public class showDevicesActivity extends AppCompatActivity implements
                 //if (validFoo.equals("ERROR"))
                 //    scanForFoo(myDevice.get(ESP_MAC));
                 //else
-                    if (!validFoo.equals(myDevice.get(ESP_FOO)))
+                if (!validFoo.equals(myDevice.get(ESP_FOO)))
                     datamanager.updateIP(myDevice.get(ESP_MAC),validFoo);
                 final String imagePrefix = myDevice.get(ESP_IMAGE);
                 sendToEsp mySendToEsp = new sendToEsp(getApplicationContext(), new sendToEsp.AsyncResponse() {
@@ -351,7 +354,7 @@ public class showDevicesActivity extends AppCompatActivity implements
                         }
                     }
                 });
-                mySendToEsp.execute(ESP_CMD_STATUS+ESP_PSW+ESP_CLOSER, myDevice.get(ESP_MAC),
+                mySendToEsp.execute(ESP_CMD_STATUS+myDevice.get(ESP_PSW)+ESP_CLOSER, myDevice.get(ESP_MAC),
                         myDevice.get(ESP_FOO));
             }
 
@@ -414,7 +417,7 @@ public class showDevicesActivity extends AppCompatActivity implements
             }
         }
         image.setImageResource(idImage);
-        deviceList.get(position).put("state", String.valueOf(idImage));
+        deviceList.get(position).put(ESP_STATUS, String.valueOf(idImage));
     }
 
     private void scanForFoo(String devMac) {
@@ -429,7 +432,7 @@ public class showDevicesActivity extends AppCompatActivity implements
         if (resultCode == RESULT_OK) {
             switch (requestCode){
                 case MainActivity.NEW_DEVICE_CODE: {
-                    feedList(NEW_DEVICE + "," + data.getStringExtra("MAC"));
+                    feedList(NEW_DEVICE + "," + data.getStringExtra(ESP_MAC));
                     setResult(RESULT_OK);//notifica a la actividad anterior que algo se modifico
                     break;
                 }
@@ -446,7 +449,6 @@ public class showDevicesActivity extends AppCompatActivity implements
                 case CORRECT_IP_CODE: {//CORREGIR_IP TODO: o se atrasa su inicio, o se hace 2 veces
                     String snippetFoo = data.getStringExtra(PARAM1);
                     String snippetMac = data.getStringExtra(PARAM2);
-                    Log.w(TAG,"Correct IP: "+snippetFoo );
                     new dataManager(getApplicationContext()).updateIP(snippetMac,snippetFoo);
                     //feedList(UPDATE_CONNECTION);
                     break;
@@ -464,7 +466,7 @@ public class showDevicesActivity extends AppCompatActivity implements
     protected void onSaveInstanceState(Bundle outState){
         if (deviceList != null)
             for (int i = 0; i < deviceList.size(); i++){
-                outState.putString(deviceList.get(i).get("mac")+"_Imagen",deviceList.get(i).get("state"));
+                outState.putString(deviceList.get(i).get(ESP_MAC)+"_Imagen",deviceList.get(i).get(ESP_STATUS));
             }
         super.onSaveInstanceState(outState);
     }

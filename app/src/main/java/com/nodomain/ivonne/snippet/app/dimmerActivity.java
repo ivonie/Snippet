@@ -41,9 +41,10 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
     private Socket mySocket;
     private String myFoo;
     private String myMac;
-    private String percentage = "100";
+    private String myPsw;
     private int scale = 64;
     private int progressOld;
+    PrintStream output;
 
     private static final String TAG = "DIMMER";
 
@@ -58,6 +59,7 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
 
         myFoo = getIntent().getStringExtra(ESP_FOO);
         myMac = getIntent().getStringExtra(ESP_MAC);
+        myPsw = getIntent().getStringExtra(ESP_PSW);
         String myName = getIntent().getStringExtra(ESP_NAME);
 
         toolbar.setTitle(myName);
@@ -69,7 +71,7 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
             public void processFinish(String output) {
                 functionSelection();
             }
-        }).execute(ESP_CMD_STATUS+ESP_PSW+ESP_CLOSER, myMac,myFoo);
+        }).execute(ESP_CMD_STATUS+myPsw+ESP_CLOSER, myMac,myFoo);
     }
 
     @Override
@@ -101,7 +103,6 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
                 String[] resultado = output.split(",");
                 switch (resultado[0]) {
                     case ESP_RES_DIMMER:{
-                        percentage = resultado[1];
                         progressOld = Integer.parseInt(resultado[1]);
                         myBrightPicker.setEnabled(true);
                         myBrightPicker.setBright(progressOld, scale);
@@ -110,61 +111,61 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
                 }
             }
         });
-        conectarESP.execute(ESP_CMD_STATUS_DIMMER+ESP_PSW+ESP_CLOSER, myMac, myFoo);//FIXME: : enviar psw
+        conectarESP.execute(ESP_CMD_STATUS_DIMMER+myPsw+ESP_CLOSER, myMac, myFoo);//FIXME: : enviar psw
     }
 
-        PrintStream output;
-        @Override
-        public void onProgressChanged(brightPicker picker, int progressValue) {
-            if (progressValue != progressOld) {
-                progressOld = progressValue;
-                asyncDimmer(PROGRESS_CHANGED);
-            }
+    @Override
+    public void onProgressChanged(brightPicker picker, int progressValue) {
+        if (progressValue != progressOld) {
+            progressOld = progressValue;
+            asyncDimmer(PROGRESS_CHANGED);
         }
+    }
 
-        @Override
-        public void onStartTrackingTouch(brightPicker picker) {
-            asyncDimmer(START_TRACKING);
-        }
+    @Override
+    public void onStartTrackingTouch(brightPicker picker) {
+        asyncDimmer(START_TRACKING);
+    }
 
-        @Override
-        public void onStopTrackingTouch(brightPicker picker) {
-            asyncDimmer(STOP_TRACKING);
-        }
+    @Override
+    public void onStopTrackingTouch(brightPicker picker) {
+        asyncDimmer(STOP_TRACKING);
+    }
 
-        private void asyncDimmer(final String accion){
-            new AsyncTask<Void, Void, Void>(){
-
-                @Override
-                protected Void doInBackground(Void ...params) {
-                    switch (accion){
-                        case START_TRACKING:{
-                            try {
-                                InetAddress netadd = InetAddress.getByName(myFoo.replaceAll("p","."));
-                                mySocket = new Socket(netadd, 5000);
-                                output = new PrintStream(mySocket.getOutputStream());
-                                output.println(ESP_CMD_DIMMER_SEND);//FIXME: add psw
-                            } catch (UnknownHostException ex) {
-                            } catch (IOException ex) {}
+    private void asyncDimmer(final String accion){
+        new AsyncTask<Void, Void, Void>(){
+            @Override
+            protected Void doInBackground(Void ...params) {
+                switch (accion){
+                    case START_TRACKING:{
+                        try {
+                            InetAddress netadd = InetAddress.getByName(myFoo.replaceAll("p","."));
+                            mySocket = new Socket(netadd, 5000);
+                            output = new PrintStream(mySocket.getOutputStream());
+                            output.println(ESP_CMD_DIMMER_SEND+myPsw+ESP_CLOSER);
+                        } catch (UnknownHostException ex) {
+                        } catch (IOException ex) {}
                             break;
-                        }
-                        case PROGRESS_CHANGED:{
-                            if (output != null) {
-                                char ch = (char) progressOld;
-                                output.print(ch);
-                            }
-                            break;
-                        }
-                        case STOP_TRACKING:{
-                            if (output != null)
-                                output.println(ESP_CMD_DIMMER_CLOSE);
-                            break;
-                        }
                     }
-                    return null;
+                    case PROGRESS_CHANGED:{
+                        if (output != null) {
+                            char ch = (char) progressOld;
+                            output.print(ch);
+                        }
+                        break;
+                    }
+                    case STOP_TRACKING:{
+                        if (output != null) {
+                            output.println(ESP_CMD_DIMMER_CLOSE);
+                            output = null;
+                        }
+                        break;
+                    }
                 }
-            }.execute();
-        }
+                return null;
+            }
+        }.execute();
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -177,5 +178,13 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    @Override
+    public void onBackPressed() {
+        if (output != null) {
+            output.println(ESP_CMD_DIMMER_CLOSE);
+            output = null;
+        }
+        super.onBackPressed();
+    }
 
 }
