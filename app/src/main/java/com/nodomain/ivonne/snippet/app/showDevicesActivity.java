@@ -154,7 +154,7 @@ public class showDevicesActivity extends AppCompatActivity implements
                     intent.putExtra(ESP_MAC, deviceList.get(position).get(ESP_MAC));
                     intent.putExtra(ESP_FOO, deviceList.get(position).get(ESP_FOO));
                     intent.putExtra(ESP_NAME, deviceList.get(position).get(ESP_NAME));
-                    intent.putExtra(ESP_MAC, deviceList.get(position).get(ESP_MAC));
+                    intent.putExtra(ESP_PSW, deviceList.get(position).get(ESP_PSW));
                     startActivityForResult(intent, DIMMER_ACTIVITY_CODE);
                     break;
                 }

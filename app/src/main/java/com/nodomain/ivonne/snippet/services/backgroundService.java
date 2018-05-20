@@ -26,8 +26,6 @@ public class backgroundService extends Service {
     static final String ACTION_BACKGROUND = "com.nodomain.ivonne.snippet.action.BACKGROUND";
     static final String TAG = "BACK_S";
 
-    private String WIFI_ERROR = "WIFI_ERROR";
-
     private CountDownTimer timer;
 
     public backgroundService() {

@@ -211,7 +211,7 @@ public class snippetNewActivity extends AppCompatActivity implements Button.OnCl
                     finish();
                 }
                 else {
-                    if (data.getStringExtra("RESULT").equals("CANCELADO")) {
+                    if (data.getStringExtra("RESULT").equals("CANCELED")) {
                         Toast.makeText(getApplicationContext(), getString(R.string.cancelado), Toast.LENGTH_SHORT).show();
                         setResult(RESULT_CANCELED, data);
                         finish();

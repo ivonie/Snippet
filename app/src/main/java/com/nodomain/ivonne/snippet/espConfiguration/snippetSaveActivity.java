@@ -158,8 +158,16 @@ public class snippetSaveActivity extends AppCompatActivity implements Button.OnC
         }
         else {
             setResult(RESULT_CANCELED,getIntent().putExtra("RESULT","ERROR"));
+            reconnectToLocalWiFi();
             finish();
         }
+    }
+
+    private void reconnectToLocalWiFi(){
+        Intent intent = new Intent(snippetSaveActivity.this, backgroundActivity.class);
+        intent.putExtra(ACTION, snippetNewActivity.RECONNECT);
+        intent.putExtra(PARAM1, networkName);
+        startActivityForResult(intent, RECONNECT_CODE);//reconnect to local network
     }
 
     @Override
@@ -175,10 +183,7 @@ public class snippetSaveActivity extends AppCompatActivity implements Button.OnC
                     else {
                         Toast.makeText(getApplicationContext(), getResources()
                                 .getString(R.string.mensaje5), Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(snippetSaveActivity.this, backgroundActivity.class);
-                        intent.putExtra(ACTION, snippetNewActivity.RECONNECT);
-                        intent.putExtra(PARAM1, networkName);
-                        startActivityForResult(intent, RECONNECT_CODE);//reconnect to local network
+                        reconnectToLocalWiFi();
                     }
                 }
                 else {
@@ -209,7 +214,7 @@ public class snippetSaveActivity extends AppCompatActivity implements Button.OnC
             dontSave = false;
         }
         else{
-            setResult(RESULT_CANCELED,getIntent().putExtra("RESULTADO","CANCELADO"));
+            setResult(RESULT_CANCELED,getIntent().putExtra("RESULT","CANCELED"));
             super.onBackPressed();
         }
     }
