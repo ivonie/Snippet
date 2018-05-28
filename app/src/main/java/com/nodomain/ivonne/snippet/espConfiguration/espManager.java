@@ -75,7 +75,8 @@ public class espManager {
     public static final String STATUS_OFF = "OFF";
     public static final String STATUS_DISCONNECTED = "DESCONECTADO";
 
-    private int TIMEOUT_CONNECTION = 10000;
+    private int TIMEOUT_CONNECTION = 100;
+    private boolean reconnect_flag = false;
 
     Context context;
 
@@ -95,11 +96,16 @@ public class espManager {
 
         new CountDownTimer(20000, 1000) {/*20 seconds to connect*/
             @Override
-            public void onTick(long l) {;
+            public void onTick(long l) {
+                if (reconnect_flag){
+                    if (wifiManager.getConnectionInfo().getSSID().contains(ESP_AP_SSID) && (wifiManager.getDhcpInfo().gateway != 0)) {
+                        Log.w(TAG,"connected to ESP");
+                        onConnectedListener.onConnected(true);
+                        this.cancel();
+                    }
+                }
                 if (wifiManager.getConnectionInfo().getSSID().contains(ESP_AP_SSID) && (wifiManager.getDhcpInfo().gateway != 0)) {
-                    Log.w(TAG,"connected to ESP");
-                    onConnectedListener.onConnected(true);
-                    this.cancel();
+                    reconnect_flag = true;
                 }
             }
 

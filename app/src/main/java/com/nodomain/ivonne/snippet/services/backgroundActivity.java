@@ -253,7 +253,7 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
 
     protected void getEspData(){
         myEspManager.borrarEspWifi();
-        new CountDownTimer(30000, 1000) {/*wait 10 seconds before reading data*/
+        timer = new CountDownTimer(30000, 1000) {/*wait 10 seconds before reading data*/
             int counter=0;
             @Override
             public void onTick(long l) {
