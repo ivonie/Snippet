@@ -75,7 +75,8 @@ public class espManager {
     public static final String STATUS_OFF = "OFF";
     public static final String STATUS_DISCONNECTED = "DESCONECTADO";
 
-    private int TIMEOUT_CONNECTION = 100;
+    public static final int SOCKET_TIMEOUT = 200; //milisecodns
+    public static final int SOCKET_RESPONSE = 10000; //milisecods
     private boolean reconnect_flag = false;
 
     Context context;
@@ -94,19 +95,22 @@ public class espManager {
         wifiManager.enableNetwork(netId, true);
         wifiManager.reconnect();
 
-        new CountDownTimer(20000, 1000) {/*20 seconds to connect*/
+        new CountDownTimer(20000, 2000) {/*20 seconds to connect*/
             @Override
             public void onTick(long l) {
-                if (reconnect_flag){
-                    if (wifiManager.getConnectionInfo().getSSID().contains(ESP_AP_SSID) && (wifiManager.getDhcpInfo().gateway != 0)) {
+                if (wifiManager.getConnectionInfo().getSSID().contains(ESP_AP_SSID) &&
+                        (wifiManager.getDhcpInfo().gateway != 0)) {
+                    //we want to validate that is connected to the right network at least twice
+                    if (reconnect_flag){
                         Log.w(TAG,"connected to ESP");
                         onConnectedListener.onConnected(true);
                         this.cancel();
                     }
+                    else
+                        reconnect_flag = true;
                 }
-                if (wifiManager.getConnectionInfo().getSSID().contains(ESP_AP_SSID) && (wifiManager.getDhcpInfo().gateway != 0)) {
-                    reconnect_flag = true;
-                }
+                else
+                    reconnect_flag = false;
             }
 
             @Override
@@ -221,7 +225,8 @@ public class espManager {
                         Log.w(TAG, "Attempting to connect to " + myRealFoo);
                         InetAddress netadd = InetAddress.getByName(myRealFoo);
                         Socket socket = new Socket();
-                        socket.connect(new InetSocketAddress(netadd, 5000), TIMEOUT_CONNECTION);
+                        socket.connect(new InetSocketAddress(netadd, 5000), SOCKET_TIMEOUT);
+                        socket.setSoTimeout(SOCKET_RESPONSE);
                         if (socket.isConnected()){
                             PrintStream output = new PrintStream(socket.getOutputStream());
                             Log.w(TAG, command);
@@ -256,7 +261,8 @@ public class espManager {
                         Log.w(TAG,myRealFoo);
                         InetAddress netadd = InetAddress.getByName(myRealFoo);
                         Socket socket = new Socket();
-                        socket.connect(new InetSocketAddress(netadd, 5000), TIMEOUT_CONNECTION);
+                        socket.connect(new InetSocketAddress(netadd, 5000), SOCKET_TIMEOUT);
+                        socket.setSoTimeout(SOCKET_RESPONSE);
                         PrintStream output = new PrintStream(socket.getOutputStream());
                         output.println("ESP8266,7STATUS\r");
                         InputStream stream = socket.getInputStream();

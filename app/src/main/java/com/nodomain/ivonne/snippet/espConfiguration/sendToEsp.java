@@ -15,6 +15,9 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.SOCKET_RESPONSE;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.SOCKET_TIMEOUT;
+
 /**
  * Created by Ivonne on 21/09/2017.
  */
@@ -25,7 +28,6 @@ public class sendToEsp extends AsyncTask<String,Void,String> {
     private auxiliarTools misFunciones;
     private String TAG = "sendToEsp";
     private Context mContext;
-    private int TIMEOUT_CONNECTION = 10;//cuanto tiempo espera para que el ESP conteste
     public sendToEsp() {
     }
     public sendToEsp(Context context, AsyncResponse delegate) {
@@ -54,7 +56,8 @@ public class sendToEsp extends AsyncTask<String,Void,String> {
                 Log.w(TAG, "Attempting to connect to " + myRealFoo + " " + myMAC);
                 InetAddress netadd = InetAddress.getByName(myRealFoo);
                 Socket socket = new Socket();
-                socket.connect(new InetSocketAddress(netadd, 5000), TIMEOUT_CONNECTION);
+                socket.connect(new InetSocketAddress(netadd, 5000), SOCKET_TIMEOUT);
+                socket.setSoTimeout(SOCKET_RESPONSE);
                 if (socket.isConnected()){
                     Log.w(TAG, "CONNECTED");
                     Log.w(TAG, "SENDING: "+ values[0]);
