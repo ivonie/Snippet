@@ -111,7 +111,7 @@ public class dimmerActivity extends AppCompatActivity implements brightPicker
                 }
             }
         });
-        conectarESP.execute(ESP_CMD_STATUS_DIMMER+myPsw+ESP_CLOSER, myMac, myFoo);//FIXME: : enviar psw
+        conectarESP.execute(ESP_CMD_STATUS_DIMMER+myPsw+ESP_CLOSER, myMac, myFoo);
     }
 
     @Override

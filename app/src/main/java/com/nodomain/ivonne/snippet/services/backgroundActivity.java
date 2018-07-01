@@ -126,6 +126,8 @@ public class backgroundActivity extends AppCompatActivity implements Handler.Cal
                     break;
                 }
                 case RECONNECT:{
+                    intent = new Intent(context, backgroundService.class);
+                    intent.putExtra(backgroundService.EXTRA_MESSENGER, new Messenger(myHandler));
                     intent.setAction(RECONNECT);
                     String param1 = getIntent().getStringExtra(PARAM1);
                     intent.putExtra(PARAM1, param1);

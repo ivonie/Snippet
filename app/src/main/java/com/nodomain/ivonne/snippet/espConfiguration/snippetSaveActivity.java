@@ -45,7 +45,7 @@ public class snippetSaveActivity extends AppCompatActivity implements Button.OnC
     private String snippetMac;
     private String snippetType;
     private String snippetName;
-    private String snippetPsw;
+    private String snippetPsw = "----";
     private String networkName;
     private String networkPsw;
     private String snippetImage;
@@ -105,7 +105,7 @@ public class snippetSaveActivity extends AppCompatActivity implements Button.OnC
 
     private boolean readData(String data){
         String[] value = data.split(",");
-        Log.w(TAG,data+" "+Integer.toString(value.length));
+        Log.w(TAG,data);
         if (value[0].equals(ESP_RES_FAILED))
             return false;//mesage received was "FAILCONNECTTOAP"
         else {

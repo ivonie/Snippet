@@ -294,6 +294,7 @@ class dataBase extends SQLiteOpenHelper {
                         newDevice.setDevType(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_TYPE)));
                         newDevice.setDevFoo(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_FOO)));
                         newDevice.setDevMac(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_MAC)));
+                        newDevice.setDevPsw(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_PSW)));
                         newDevice.setDevXx(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_XX)));
                         newDevice.setDevYy(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_XX)));
                         newDevice.setDevImage(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_IMAGE)));
@@ -327,6 +328,7 @@ class dataBase extends SQLiteOpenHelper {
                         newDevice.setDevType(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_TYPE)));
                         newDevice.setDevFoo(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_FOO)));
                         newDevice.setDevMac(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_MAC)));
+                        newDevice.setDevPsw(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_PSW)));
                         newDevice.setDevXx(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_XX)));
                         newDevice.setDevYy(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_XX)));
                         newDevice.setDevImage(cursor.getString(cursor.getColumnIndex(KEY_DEVICE_IMAGE)));

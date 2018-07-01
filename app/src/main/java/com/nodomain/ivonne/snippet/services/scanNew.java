@@ -167,7 +167,7 @@ public class scanNew extends AsyncTask<Void, Void, Void> {
                         return;
                     }
                     else
-                        h.isReachable(PING_TIMEOUT);
+                        h.isReachable(PING_TIMEOUT*2);
                 } catch (IOException e) {
                 }
             }

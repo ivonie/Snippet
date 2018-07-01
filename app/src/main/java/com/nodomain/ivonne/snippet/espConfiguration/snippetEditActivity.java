@@ -36,7 +36,9 @@ import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_FOO;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_IMAGE;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_MAC;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_NAME;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_NAME_CHANGED;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_PSW;
+import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_PSW_CHANGED;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_ERROR;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_RES_OK;
 import static com.nodomain.ivonne.snippet.espConfiguration.espManager.ESP_TYPE;
@@ -180,29 +182,13 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
     }
 
     public void applyChanges(){
-        if (!devicePsw.getText().toString().equals(myDevice.getDevPsw()))
+        if (!devicePsw.getText().toString().equals(myDevice.getDevPsw()))//PSW is different from old
             sendChangesToESP(ESP_PSW);
-        else if (!deviecName.getText().toString().equals(myDevice.getDevName()))
+        else if (!deviecName.getText().toString().equals(myDevice.getDevName()))//Name is different from old
             sendChangesToESP(ESP_NAME);
-        else if (setOff){
+        else if (setOff){//Auto set off is selected
             setOff = false;
-            sendToEsp conectarESP = new sendToEsp(getApplicationContext(), new sendToEsp.AsyncResponse() {
-                @Override
-                public void processFinish(String output) {
-                    String value[]= output.split(",");
-                    switch (value[0]){
-                        case "ON":{
-                            sendChangesToESP("setOff");
-                            break;
-                        }
-                        case "OFF":{
-                            //MENSAJE de que deberia estar encendido el foco
-                            break;
-                        }
-                    }
-                }
-            });
-            conectarESP.execute(ESP_CMD_STATUS+oldPsw+ESP_CLOSER, myDevice.getDevMac(), myDevice.getDevFoo());
+            sendChangesToESP("setOff");
         }
         else if (!myDevice.getDevOn().equals(String.valueOf(autoOn.isChecked()))){
             myDevice.setDevOn(String.valueOf(autoOn.isChecked()));
@@ -226,18 +212,18 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
                     MONITOR_WIFI = true;
                 }
             }
-            Log.w("EDITAR_S", "encendido automatico: "+Boolean.toString(autoOn.isChecked()));
+            Log.w("EDITAR", "encendido automatico: "+Boolean.toString(autoOn.isChecked()));
             applyChanges();
         }
         else{
+            Log.w("EDITAR", "Guardando");
             myDM.addorUpdateDevice(myDevice);
             buttonSave.setEnabled(false);
             setResult(RESULT_OK);//algo se modifico
-            finish();
         }
     }
 
-    private void sendChangesToESP(String cambio){
+    private void sendChangesToESP(String data){
         final sendToEsp enviarCambios = new sendToEsp(snippetEditActivity.this, new sendToEsp.AsyncResponse() {
             @Override
             public void processFinish(String output) {
@@ -253,20 +239,21 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
                         }
                         break;
                     }
-                    case ESP_RES_OK:{
-                        if (valores[1].equals(ESP_PSW)) {
-                            myDevice.setDevPsw(devicePsw.getText().toString());
-                            oldPsw = myDevice.getDevPsw();
-                        }
-                        else if (valores[1].equals(ESP_NAME))
-                            myDevice.setDevName(deviecName.getText().toString());
+                    case ESP_NAME_CHANGED: {
+                        myDevice.setDevName(deviecName.getText().toString());
+                        applyChanges();
+                        break;
+                    }
+                    case ESP_PSW_CHANGED: {
+                        myDevice.setDevPsw(devicePsw.getText().toString());
+                        oldPsw = myDevice.getDevPsw();
                         applyChanges();
                         break;
                     }
                 }
             }
         });
-        switch (cambio){
+        switch (data){
             case ESP_NAME:{
                 enviarCambios.execute(ESP_CMD_NAME+oldPsw+","+ deviecName.getText().toString()
                         +ESP_CLOSER, myDevice.getDevMac(), myDevice.getDevFoo());
@@ -281,9 +268,8 @@ public class snippetEditActivity extends AppCompatActivity implements View.OnCli
                 WifiManager wifiManager = (WifiManager)getApplicationContext()
                         .getSystemService(Context.WIFI_SERVICE);
                 int thisAndroid = wifiManager.getDhcpInfo().ipAddress;
-                new sendToEsp().execute(ESP_CMD_SETOFF+getStringFromIP(thisAndroid)+ ","+ oldPsw
-                        +ESP_CLOSER, myDevice.getDevMac(), myDevice.getDevFoo());//FIXME: < (12) configurar setOff automatico
-                //TODO: si el usuario selecciono que sea permanente, guardarlo en la base de datos
+                new sendToEsp().execute(ESP_CMD_SETOFF+oldPsw+ ","+getStringFromIP(thisAndroid)
+                        +ESP_CLOSER, myDevice.getDevMac(), myDevice.getDevFoo());
                 applyChanges();
                 break;
             }

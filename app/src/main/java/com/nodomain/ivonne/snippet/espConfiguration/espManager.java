@@ -64,6 +64,8 @@ public class espManager {
     public static final String ESP_RES_DIMMER = "VALUEOFDIMMER";
     public static final String ESP_RES_SCAN = "SCANOK";
     public static final String ESP_RES_OK = "CORRECTO";
+    public static final String ESP_NAME_CHANGED ="NAMEDEVICECHANGED";
+    public static final String ESP_PSW_CHANGED ="PASSDEVICECHANGED";
     public static final String ESP_RES_ERROR = "ERROR";
 
     /*Snippet types*/
@@ -76,7 +78,7 @@ public class espManager {
     public static final String STATUS_DISCONNECTED = "DESCONECTADO";
 
     public static final int SOCKET_TIMEOUT = 200; //milisecodns
-    public static final int SOCKET_RESPONSE = 10000; //milisecods
+    public static final int SOCKET_RESPONSE = 10000; //miliseconds
     private boolean reconnect_flag = false;
 
     Context context;
