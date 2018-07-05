@@ -1,6 +1,7 @@
 package com.nodomain.ivonne.snippet.espConfiguration;
 
 import android.content.Context;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -10,6 +11,7 @@ import com.nodomain.ivonne.snippet.tools.dataManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -56,9 +58,12 @@ public class sendToEsp extends AsyncTask<String,Void,String> {
                 Log.w(TAG, "Attempting to connect to " + myRealFoo + " " + myMAC);
                 InetAddress netadd = InetAddress.getByName(myRealFoo);
                 Socket socket = new Socket();
+                WifiManager wifiManager = (WifiManager)mContext.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                int localIpAddress = wifiManager.getConnectionInfo().getIpAddress();
+                socket.bind(new InetSocketAddress(localIpAddress));
                 socket.connect(new InetSocketAddress(netadd, 5000), SOCKET_TIMEOUT);
-                socket.setSoTimeout(SOCKET_RESPONSE);
                 if (socket.isConnected()){
+                    socket.setSoTimeout(SOCKET_RESPONSE);
                     Log.w(TAG, "CONNECTED");
                     Log.w(TAG, "SENDING: "+ values[0]);
                     PrintStream output = new PrintStream(socket.getOutputStream());
